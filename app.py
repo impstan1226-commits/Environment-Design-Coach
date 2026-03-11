@@ -26,7 +26,7 @@ if prompt := st.chat_input("Explain your work..."):
         st.markdown(prompt)
 
     # 这里的 instruction 也是加密读取的
-    model = genai.GenerativeModel('gemini-1.5-flash-latest', system_instruction=MY_INSTRUCTION)
+    model = genai.GenerativeModel('gemini-1.5-flash', system_instruction=MY_INSTRUCTION)
     
     with st.chat_message("assistant"):
         parts = [prompt]
