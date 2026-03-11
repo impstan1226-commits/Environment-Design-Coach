@@ -3,7 +3,7 @@ import google.generativeai as genai
 from PIL import Image
 
 # 1. 配置 API Key
-API_KEY = "AIzaSyCNIlCTrq6_Hxvz21HAPAiCSk6zH3WTlaU" 
+API_KEY = "A" 
 genai.configure(api_key=API_KEY)
 
 # 2. 封装 Instruction
