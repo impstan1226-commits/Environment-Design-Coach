@@ -3,7 +3,7 @@ import google.generativeai as genai
 from PIL import Image
 
 # 1. Page Configuration
-st.set_page_config(page_title="Environment Design Coach", page_icon="🎨", layout="centered")
+st.set_page_config(page_title=" AI Environment Design Coach", page_icon="🎨", layout="centered")
 
 # 2. Configure API
 API_KEY = st.secrets["GEMINI_API_KEY"]
