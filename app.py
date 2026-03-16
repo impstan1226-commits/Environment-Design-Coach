@@ -12,27 +12,23 @@ SYSTEM_INSTRUCTION = st.secrets["COMMAND_CENTER"]
 # Configure Gemini API
 genai.configure(api_key=API_KEY)
 
-# 3. Sidebar: Persistent Image Display (Requirement #10 & Visual Thinking)
+# 3. Sidebar: Persistent Image Display
 with st.sidebar:
     st.title("🖼️ Design Canvas")
     st.markdown("---")
     
-    # Image Uploader
     up_file = st.file_uploader("Upload your design/reference here", type=["png", "jpg", "jpeg"])
     
-    # Persistent storage logic for the image
     if up_file:
         st.session_state.current_image = Image.open(up_file)
     
-    # Show the image if it exists in session
     if "current_image" in st.session_state:
         st.image(st.session_state.current_image, caption="Current Review Object", use_container_width=True)
         if st.button("🗑️ Remove Image", use_container_width=True):
-            if "current_image" in st.session_state:
-                del st.session_state.current_image
+            del st.session_state.current_image
             st.rerun()
     else:
-        st.info("No image uploaded yet. You can still discuss your concept via text.")
+        st.info("No image uploaded yet.")
     
     st.markdown("---")
     if st.button("🔄 Reset Full Chat", use_container_width=True):
@@ -41,38 +37,56 @@ with st.sidebar:
             del st.session_state.current_image
         st.rerun()
 
-# 4. Main Area: Header & Introduction (Requirement #1)
+# 4. Main Area: Header
 st.title("🎨 Environment Design Coach")
 st.markdown("##### AI-Powered Studio Critique for Environment Design Students")
 
-with st.expander("📖 How to Start & User Guide", expanded=False):
+with st.expander("📖 How to Start & User Guide"):
     st.write("""
-    This tool simulates a **Studio Critique** with an Art Director. The coach will guide you through short, targeted questions to help clarify your design thinking.
-    
-    **Instructions:**
-    1. Select your current **Design Phase** below.
-    2. Briefly describe your concept or environment.
+    This tool simulates a Studio Critique. The coach will guide you through short questions to clarify your design thinking.
+    1. Select your **Design Phase**.
+    2. Describe your concept.
     3. Upload an image to the **Sidebar** if needed.
-    4. The coach will prompt you with a design question.
-    
-    **Tip:** There are no "right" answers. You are the designer; the coach is here to help you think deeper.
     """)
 
-# 5. Phase Selector (Requirement #2)
+# 5. Phase Selector
 phase = st.selectbox(
     "📍 Select your design phase",
-    ["Story", "Reference", "Thumbnail", "Polishing"],
-    help="The coach will tailor questions based on your selected phase."
+    ["Story", "Reference", "Thumbnail", "Polishing"]
 )
 
 # 6. Initialize Chat History
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-# Display Chat History (Requirement #7)
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
-# 7. Example Prompts (Requirement #3)
-st.markdown("""
+# 7. Example Prompts (修复了这里的引号逻辑)
+st.info("Example: 'My environment is an abandoned station in a cyberpunk city.'")
+
+# 8. Chat Input Logic
+if prompt := st.chat_input("Describe your concept here..."):
+    st.session_state.messages.append({"role": "user", "content": prompt})
+    with st.chat_message("user"):
+        st.markdown(prompt)
+
+    try:
+        context_prompt = f"[CONTEXT: Design Phase = {phase}]\nStudent Input: {prompt}"
+        model = genai.GenerativeModel(
+            model_name="gemini-1.5-flash", 
+            system_instruction=SYSTEM_INSTRUCTION
+        )
+        
+        with st.chat_message("assistant"):
+            parts = [context_prompt]
+            if "current_image" in st.session_state:
+                parts.append(st.session_state.current_image)
+            
+            response = model.generate_content(parts)
+            if response.text:
+                st.markdown(response.text)
+                st.session_state.messages.append({"role": "assistant", "content": response.text})
+    except Exception as e:
+        st.error(f"An error occurred: {str(e)}")
