@@ -40,7 +40,8 @@ st.title("Environment Design Coach")
 st.markdown("#### AI Studio Critique for Environment Design Students")
 st.info("**Key Idea:** AI-powered studio critique system that guides environment design thinking through structured questioning.")
 
-with st.expander("📖 Guide & How to Start", expanded=False):
+# 修复点 1：将 expanded 设为 True，让指南默认展开
+with st.expander("📖 Guide & How to Start", expanded=True):
     st.write("**This tool simulates a studio critique with an art director.**")
     st.markdown("""
     1. Choose your **design stage**.
@@ -64,7 +65,7 @@ for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
-# 7. Dynamic Starting Instructions (Fixed Syntax Error)
+# 7. Dynamic Starting Instructions (修复点 2：弃用 HTML 拼接，改用原生组件防止乱码)
 if len(st.session_state.messages) == 0:
     needs_image = stage in ["Reference", "Thumbnail", "Polishing"]
     
@@ -75,19 +76,17 @@ if len(st.session_state.messages) == 0:
         "Polishing": "I'm refining the textures and atmospheric fog for this night scene."
     }
     
-    # 修正点：将 CSS 的单大括号改为双大括号 {{ }}
-    warning_html = f"<p style='margin: 5px 0; color: #d63031;'>⚠️ <b>Step 1:</b> Please upload your image in the <b>Sidebar</b> first.</p>" if needs_image else ""
-    
-    st.markdown(f"""
-    <div style="background-color: #f0f2f6; padding: 15px; border-radius: 10px; border-left: 5px solid #ff4b4b;">
-        <p style="margin: 0; font-weight: bold; color: #31333F;">🚀 Starting {stage} Stage:</p>
-        {warning_html}
-        <p style="margin: 5px 0 0 0; color: #555;">
-            <b>Step 2:</b> Briefly explain your intent. <br>
-            <i>Try saying: "{example_text[stage]}"</i>
-        </p>
-    </div>
-    """, unsafe_allow_html=True)
+    with st.container():
+        st.markdown(f"### 🚀 Starting {stage} Stage")
+        if needs_image:
+            st.error("⚠️ **Step 1:** Please upload your image in the **Sidebar** first.")
+        
+        st.markdown(f"""
+        **Step 2:** Briefly explain your intent in the chat box below.
+        
+        *Try saying: "{example_text[stage]}"*
+        """)
+        st.markdown("---")
 
 # 8. Chat Input & Logic
 if prompt := st.chat_input("Describe your concept here..."):
