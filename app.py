@@ -40,7 +40,6 @@ st.title("Environment Design Coach")
 st.markdown("#### AI Studio Critique for Environment Design Students")
 st.info("**Key Idea:** AI-powered studio critique system that guides environment design thinking through structured questioning.")
 
-# 修复点 1：将 expanded 设为 True，让指南默认展开
 with st.expander("📖 Guide & How to Start", expanded=True):
     st.write("**This tool simulates a studio critique with an art director.**")
     st.markdown("""
@@ -65,7 +64,7 @@ for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
-# 7. Dynamic Starting Instructions (修复点 2：弃用 HTML 拼接，改用原生组件防止乱码)
+# 7. Dynamic Starting Instructions (Optimized Step Logic)
 if len(st.session_state.messages) == 0:
     needs_image = stage in ["Reference", "Thumbnail", "Polishing"]
     
@@ -78,14 +77,16 @@ if len(st.session_state.messages) == 0:
     
     with st.container():
         st.markdown(f"### 🚀 Starting {stage} Stage")
+        
         if needs_image:
+            # 有图模式：分两步
             st.error("⚠️ **Step 1:** Please upload your image in the **Sidebar** first.")
+            st.markdown(f"**Step 2:** Briefly explain your intent in the chat box below.")
+        else:
+            # 无图模式（Story）：直接 Step 1
+            st.markdown(f"**Step 1:** Briefly explain your intent in the chat box below.")
         
-        st.markdown(f"""
-        **Step 2:** Briefly explain your intent in the chat box below.
-        
-        *Try saying: "{example_text[stage]}"*
-        """)
+        st.markdown(f"*Try saying: \"{example_text[stage]}\"*")
         st.markdown("---")
 
 # 8. Chat Input & Logic
