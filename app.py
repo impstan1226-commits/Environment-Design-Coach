@@ -15,8 +15,9 @@ with st.sidebar:
     st.title("🖼️ Design Canvas")
     st.markdown("---")
     
-    up_file = st.file_uploader("Upload your design or reference here", type=["png", "jpg", "jpeg"])
-    st.caption("Mandatory for Reference, Thumbnail, and Polishing stages.")
+    # 优化清单 4：修改上传区域说明
+    up_file = st.file_uploader("Upload your design, thumbnail, or reference image here", type=["png", "jpg", "jpeg"])
+    st.caption("Recommended for Reference, Thumbnail, and Polishing stages.")
     
     if up_file:
         st.session_state.current_image = Image.open(up_file)
@@ -35,17 +36,20 @@ with st.sidebar:
             del st.session_state.current_image
         st.rerun()
 
-# 4. Main Area: Header
+# 4. Main Area: Header & Key Idea
 st.title("Environment Design Coach")
 st.markdown("#### AI Studio Critique for Environment Design Students")
+
+# 优化清单 5：保留 Key Idea
 st.info("**Key Idea:** AI-powered studio critique system that guides environment design thinking through structured questioning.")
 
-with st.expander("📖 Guide & How to Start", expanded=True):
-    st.write("**This tool simulates a studio critique with an art director.**")
+# 优化清单 1 & 2 & 6：修改介绍句、步骤顺序和 Guide 文字
+with st.expander("📖 How to Start & User Guide", expanded=True):
+    st.write("**This tool simulates a studio critique with an art director to guide environment design thinking.**")
     st.markdown("""
     1. Choose your **design stage**.
-    2. Upload your image to the **Sidebar** (for Reference/Thumbnail/Polishing).
-    3. Briefly describe your **intention** in the chat.
+    2. Briefly describe your **idea** in the chat.
+    3. Upload an **image** if needed (for Reference, Thumbnail, or Polishing stages).
     """)
 
 # 5. Stage Selector
@@ -64,9 +68,12 @@ for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
-# 7. Dynamic Starting Instructions (Optimized Step Logic)
+# 7. Dynamic Starting Instructions
 if len(st.session_state.messages) == 0:
     needs_image = stage in ["Reference", "Thumbnail", "Polishing"]
+    
+    # 优化清单 3：修改 Story 标题
+    title_text = "🚀 Story Stage – Start Your World Concept" if stage == "Story" else f"🚀 Starting {stage} Stage"
     
     example_text = {
         "Story": "My environment is an abandoned station in a cyberpunk city.",
@@ -76,15 +83,14 @@ if len(st.session_state.messages) == 0:
     }
     
     with st.container():
-        st.markdown(f"### 🚀 Starting {stage} Stage")
+        st.markdown(f"### {title_text}")
+        
+        # 按照逻辑，无论什么阶段，Step 1 都是说明意图
+        st.markdown(f"**Step 1:** Briefly explain your intent in the chat box below.")
         
         if needs_image:
-            # 有图模式：分两步
-            st.error("⚠️ **Step 1:** Please upload your image in the **Sidebar** first.")
-            st.markdown(f"**Step 2:** Briefly explain your intent in the chat box below.")
-        else:
-            # 无图模式（Story）：直接 Step 1
-            st.markdown(f"**Step 1:** Briefly explain your intent in the chat box below.")
+            # 如果是需要图的阶段，Step 2 提醒传图
+            st.warning("⚠️ **Step 2:** Upload your image in the **Sidebar** to help the coach see your work.")
         
         st.markdown(f"*Try saying: \"{example_text[stage]}\"*")
         st.markdown("---")
