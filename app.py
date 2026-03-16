@@ -15,7 +15,6 @@ with st.sidebar:
     st.title("🖼️ Design Canvas")
     st.markdown("---")
     
-    # Persistent Image Upload
     up_file = st.file_uploader("Upload your design or reference here", type=["png", "jpg", "jpeg"])
     st.caption("Mandatory for Reference, Thumbnail, and Polishing stages.")
     
@@ -65,9 +64,8 @@ for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
-# 7. Dynamic Starting Instructions (Optimized for Image + Text)
+# 7. Dynamic Starting Instructions (Fixed Syntax Error)
 if len(st.session_state.messages) == 0:
-    # Logic for image-based stages
     needs_image = stage in ["Reference", "Thumbnail", "Polishing"]
     
     example_text = {
@@ -77,7 +75,41 @@ if len(st.session_state.messages) == 0:
         "Polishing": "I'm refining the textures and atmospheric fog for this night scene."
     }
     
-    # Constructing the instruction box
+    # 修正点：将 CSS 的单大括号改为双大括号 {{ }}
+    warning_html = f"<p style='margin: 5px 0; color: #d63031;'>⚠️ <b>Step 1:</b> Please upload your image in the <b>Sidebar</b> first.</p>" if needs_image else ""
+    
     st.markdown(f"""
     <div style="background-color: #f0f2f6; padding: 15px; border-radius: 10px; border-left: 5px solid #ff4b4b;">
-        <p style="margin: 0; font-weight: bold; color: #31333F;">🚀 Starting {
+        <p style="margin: 0; font-weight: bold; color: #31333F;">🚀 Starting {stage} Stage:</p>
+        {warning_html}
+        <p style="margin: 5px 0 0 0; color: #555;">
+            <b>Step 2:</b> Briefly explain your intent. <br>
+            <i>Try saying: "{example_text[stage]}"</i>
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
+
+# 8. Chat Input & Logic
+if prompt := st.chat_input("Describe your concept here..."):
+    st.session_state.messages.append({"role": "user", "content": prompt})
+    with st.chat_message("user"):
+        st.markdown(prompt)
+
+    try:
+        context_prompt = f"[CONTEXT: Design Stage = {stage}]\nStudent Input: {prompt}"
+        model = genai.GenerativeModel(
+            model_name="gemini-3.1-flash-lite-preview", 
+            system_instruction=SYSTEM_INSTRUCTION
+        )
+        
+        with st.chat_message("assistant"):
+            parts = [context_prompt]
+            if "current_image" in st.session_state:
+                parts.append(st.session_state.current_image)
+            
+            response = model.generate_content(parts)
+            if response.text:
+                st.markdown(response.text)
+                st.session_state.messages.append({"role": "assistant", "content": response.text})
+    except Exception as e:
+        st.error(f"Error: {str(e)}")
