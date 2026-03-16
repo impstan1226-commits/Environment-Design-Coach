@@ -2,24 +2,27 @@ import streamlit as st
 import google.generativeai as genai
 from PIL import Image
 
-# 1. Page Configuration
-st.set_page_config(page_title="Environment Design Coach", page_icon="🎨", layout="wide")
+# 1. Page Configuration - Back to standard layout for stability
+st.set_page_config(page_title="Environment Design Coach", page_icon="🎨", layout="centered")
 
-# 2. Secrets & API
+# 2. Retrieve Configuration from Secrets
 API_KEY = st.secrets["GEMINI_API_KEY"]
 SYSTEM_INSTRUCTION = st.secrets["COMMAND_CENTER"]
 genai.configure(api_key=API_KEY)
 
-# 3. Sidebar: Canvas & Examples
+# 3. Sidebar: Canvas Area
 with st.sidebar:
     st.title("🖼️ Design Canvas")
-    up_file = st.file_uploader("Upload your work", type=["png", "jpg", "jpeg"])
+    st.markdown("---")
+    
+    # Persistent Image Upload
+    up_file = st.file_uploader("Upload your design/reference", type=["png", "jpg", "jpeg"])
     if up_file:
         st.session_state.current_image = Image.open(up_file)
     
     if "current_image" in st.session_state:
-        st.image(st.session_state.current_image, use_container_width=True)
-        if st.button("🗑️ Remove Image"):
+        st.image(st.session_state.current_image, caption="Current Review Object", use_container_width=True)
+        if st.button("🗑️ Remove Image", use_container_width=True):
             del st.session_state.current_image
             st.rerun()
     
@@ -36,43 +39,71 @@ with st.sidebar:
             del st.session_state.current_image
         st.rerun()
 
-# 4. Main Area
+# 4. Main Area: Structured Layout
 st.title("Environment Design Coach")
-st.info("**Key Idea:** AI-powered studio critique system that guides design thinking through structured questioning.")
+st.markdown("#### AI Studio Critique for Environment Design Students")
 
-stage = st.selectbox("📍 Choose your design stage", ["Story", "Reference", "Thumbnail", "Polishing"])
+# Key Idea Box
+st.info("**Key Idea:** AI-powered studio critique system that guides environment design thinking through structured questioning.")
 
-# Chat Display
+# Guide (Ensuring it shows up properly)
+with st.expander("📖 Guide & How to Start", expanded=True):
+    st.write("**This tool simulates a studio critique with an art director.**")
+    st.markdown("""
+    1. Choose your **design stage**.
+    2. Briefly describe your **idea**.
+    3. Upload an **image** to the sidebar if needed.
+    """)
+
+# Stage Selector
+stage = st.selectbox(
+    "📍 Choose your design stage",
+    ["Story", "Reference", "Thumbnail", "Polishing"]
+)
+
+st.markdown("---")
+
+# 5. Chat History Display
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-for message in st.session_state.messages:
-    with st.chat_message(message["role"]):
-        st.markdown(message["content"])
+# Using a container to keep chat messages organized
+chat_container = st.container()
+with chat_container:
+    for message in st.session_state.messages:
+        with st.chat_message(message["role"]):
+            st.markdown(message["content"])
 
-# 5. Chat Input
+# 6. Chat Input Logic
 if prompt := st.chat_input("Describe your concept here..."):
+    # Append User Message
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
 
     try:
-        # Use the correct model name you specified
+        # Context Injection
+        context_prompt = f"[CONTEXT: Design Stage = {stage}]\nStudent Input: {prompt}"
+        
+        # Initialize Model (Correct version)
         model = genai.GenerativeModel(
             model_name="gemini-3.1-flash-lite-preview", 
             system_instruction=SYSTEM_INSTRUCTION
         )
-        
-        context_prompt = f"[CONTEXT: Stage={stage}]\nStudent: {prompt}"
         
         with st.chat_message("assistant"):
             parts = [context_prompt]
             if "current_image" in st.session_state:
                 parts.append(st.session_state.current_image)
             
+            # Generate Response
             response = model.generate_content(parts)
+            
             if response.text:
                 st.markdown(response.text)
                 st.session_state.messages.append({"role": "assistant", "content": response.text})
+            else:
+                st.error("The AI could not generate a response.")
+
     except Exception as e:
-        st.error(f"Error: {str(e)}")
+        st.error(f"An error occurred: {str(e)}")
