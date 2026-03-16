@@ -85,7 +85,7 @@ if prompt := st.chat_input("Describe your concept here..."):
         # Context includes the 'Stage' instead of 'Phase'
         context_prompt = f"[CONTEXT: Design Stage = {stage}]\nStudent Input: {prompt}"
         model = genai.GenerativeModel(
-            model_name="gemini-1.5-flash", 
+            model_name="gemini-3.1-flash-lite-preview", 
             system_instruction=SYSTEM_INSTRUCTION
         )
         
