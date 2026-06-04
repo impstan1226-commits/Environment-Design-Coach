@@ -5,15 +5,22 @@ from PIL import Image
 # 1. Page Configuration
 st.set_page_config(page_title="AI Environment Design Coach", page_icon="🎨", layout="centered")
 
-# 2. Configure API
-API_KEY = st.secrets["GEMINI_API_KEY"]
+# 2. Configure API (System Instruction from Secrets)
 SYSTEM_INSTRUCTION = st.secrets["COMMAND_CENTER"]
-genai.configure(api_key=API_KEY)
 
-# 3. Sidebar: Canvas Area
+# 3. Sidebar: Canvas & API Key Area
 with st.sidebar:
-    st.title("🖼️ Design Canvas")
+    st.title("🔑 Student Authentication")
+    student_key = st.text_input(
+        "Enter your Gemini API Key:", 
+        type="password", 
+        placeholder="AIzaSy...",
+        help="Get your free API Key from https://aistudio.google.com"
+    )
+    st.markdown("[Get Free Gemini API Key 🔗](https://aistudio.google.com)")
     st.markdown("---")
+    
+    st.title("🖼️ Design Canvas")
     
     up_file = st.file_uploader("Upload your design, thumbnail, or reference image here", type=["png", "jpg", "jpeg"])
     st.caption("Mandatory for Reference, Thumbnail, and Polishing stages.")
@@ -34,6 +41,17 @@ with st.sidebar:
         if "current_image" in st.session_state:
             del st.session_state.current_image
         st.rerun()
+
+# 3.5 API Verification Interceptor
+if not student_key:
+    st.title("AI Environment Design Coach")
+    st.markdown("#### An AI-Guided Studio Critique System for Concept Art Education")
+    st.warning("👋 **Welcome, Student!** Please grab your free Gemini API Key from **Google AI Studio** and paste it into the sidebar on the left to unlock your Art Director Coach.")
+    st.info("💡 **Quick Guide:**\n1. Sign in to [Google AI Studio](https://aistudio.google.com) with your Google account.\n2. Click **Create API Key**.\n3. Copy the key and paste it into the **Student Authentication** box on the left.")
+    st.stop()  # Stop executing the rest of the script until the key is provided
+else:
+    # Configure the API with the student's personal key
+    genai.configure(api_key=student_key)
 
 # 4. Main Area: Header
 st.title("AI Environment Design Coach")
@@ -79,23 +97,18 @@ if len(st.session_state.messages) == 0:
 
     # 使用 Streamlit 原生 container 模拟之前的视觉效果
     with st.container():
-        # 优化清单 3：修改 Story 标题语境
         header_title = "🚀 Story Stage – Start Your World Concept" if stage == "Story" else f"🚀 Starting {stage} Stage"
         st.markdown(f"### {header_title}")
 
-        # 逻辑判断：Story 只有一步，其他有两步
         if needs_img:
             if not has_img:
-                # 第一步：传图（红色警告）
                 st.error("⚠️ **Step 1:** Please upload your image in the **Sidebar** first.")
                 st.markdown("> *Wait for the coach to see your work before describing it.*")
             else:
-                # 第一步已完成，显示第二步
                 st.success("✅ **Step 1 Complete:** Image uploaded.")
                 st.markdown(f"**Step 2:** Briefly explain your intent in the chat box below.")
                 st.markdown(f"*Try saying: \"{example_text[stage]}\"*")
         else:
-            # Story 阶段逻辑：直接就是第一步
             st.markdown(f"**Step 1:** Briefly explain your world concept in the chat box below.")
             st.markdown(f"*Try saying: \"{example_text[stage]}\"*")
         
@@ -103,15 +116,12 @@ if len(st.session_state.messages) == 0:
 
 # 8. Chat Input & AI Logic
 if prompt := st.chat_input("Describe your concept here..."):
-    # 针对需要图的阶段进行拦截
     if stage in ["Reference", "Thumbnail", "Polishing"] and "current_image" not in st.session_state:
         st.warning("Please upload an image in the sidebar first so the coach can review it!")
     else:
         st.session_state.messages.append({"role": "user", "content": prompt})
-        # 立即刷新以隐藏引导框并显示对话
         st.rerun()
 
-# 这一部分处理 AI 回复，放在 rerun 之后确保逻辑连续
 if len(st.session_state.messages) > 0 and st.session_state.messages[-1]["role"] == "user":
     with st.chat_message("assistant"):
         try:
