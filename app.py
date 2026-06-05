@@ -171,7 +171,9 @@ def extract_json_object(raw_text):
         raise
 
 def build_response_schema(stage: str):
-    """Gemini structured JSON schema for the active stage only."""
+    """Gemini structured JSON schema for the active stage only.
+    Uses empty strings instead of null to improve Gemini JSON reliability.
+    """
     metrics = STAGE_METRICS[stage]
     return {
         "type": "object",
@@ -185,8 +187,7 @@ def build_response_schema(stage: str):
                 "properties": {
                     metric: {
                         "type": "string",
-                        "nullable": True,
-                        "description": "Short confirmed metric value, or null if not clearly confirmed."
+                        "description": "Short confirmed metric value, or an empty string if not clearly confirmed."
                     }
                     for metric in metrics
                 },
@@ -194,8 +195,7 @@ def build_response_schema(stage: str):
             },
             "rolling_summary_patch": {
                 "type": "string",
-                "nullable": True,
-                "description": "Only for Stage 1. Updated world concept summary, or null/empty for other stages."
+                "description": "Only for Stage 1. Updated world concept summary, or an empty string for other stages."
             }
         },
         "required": [
@@ -258,7 +258,7 @@ STRICT BEHAVIOUR RULES:
 7. Only extract a metric value when the student has clearly provided a concrete design decision.
 8. The metric name is for internal checking only. Do not literally ask the student to "fill in" or "state" that metric.
 9. Ask creative, reflective design questions that help the student discover the metric indirectly.
-10. For extracted_metrics, only the current target metric may receive a real value. All other metrics must be null.
+10. For extracted_metrics, only the current target metric may receive a real value. All other metrics must be an empty string "".
 11. Existing locked values must not be rewritten.
 12. Keep extracted metric values short: ideally 3 to 8 words.
 
@@ -266,7 +266,7 @@ WORLD SUMMARY RULES:
 1. Only when the current stage is "1. World Story", update rolling_summary_patch.
 2. The rolling_summary_patch must be a concise, coherent record of confirmed student-provided world design facts only.
 3. Do not beautify by adding new facts. Do not add lore, props, weather, culture, materials, or character backstory unless the student stated them.
-4. For stages 2 to 7, rolling_summary_patch must be null.
+4. For stages 2 to 7, rolling_summary_patch must be an empty string "".
 
 OUTPUT RULE:
 Return only a valid JSON object with this exact structure:
@@ -564,4 +564,7 @@ if len(st.session_state.messages) > 0 and st.session_state.messages[-1]["role"] 
 
         except Exception as e:
             st.error(f"Engine Exception Error: {str(e)}")
+            if "raw_text" in locals() and raw_text:
+                with st.expander("DEBUG GEMINI RAW OUTPUT"):
+                    st.code(raw_text)
             st.caption("If this happens repeatedly, check whether the Gemini model name is available for your API key and whether the API key has quota.")
