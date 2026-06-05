@@ -12,7 +12,7 @@ if "authenticated_key" not in st.session_state:
 
 # 3. 🔑 Full-Screen Authentication Gate (Login Page)
 if st.session_state.authenticated_key is None:
-    # 🖼️ 自动加载你在根目录上传的 login_banner.png
+    # 🖼️ 自动加载并等比例适配你全新上传的 1600x600 高清大图
     if os.path.exists("login_banner.png"):
         st.image("login_banner.png", use_container_width=True)
     elif os.path.exists("login_banner.jpg"):
