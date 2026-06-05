@@ -65,11 +65,9 @@ genai.configure(api_key=st.session_state.authenticated_key)
 # 🚀 CLASSROOM DISCOURSE ENGINE Layout
 # =====================================================================
 
-# Dynamic key system used to completely break file uploader cache blocks on switch actions
 if "file_uploader_key" not in st.session_state:
     st.session_state.file_uploader_key = 0
 
-# Dynamic selector routing index logic
 stage_options = [
     "1. World Story", "2. Exterior Reference", "3. Exterior Thumbnail",
     "4. Interior Reference", "5. Interior Thumbnail", "6. Exterior Polishing", "7. Interior Polishing"
@@ -83,7 +81,6 @@ with st.sidebar:
     st.title("🖼️ Design Canvas")
     st.markdown("---")
     
-    # Check current staging parameters
     current_selected_stage = stage_options[st.session_state.stage_index_memory]
     needs_img = current_selected_stage != "1. World Story"
     
@@ -118,7 +115,7 @@ with st.sidebar:
         else:
             st.info(f"⭕ **{metric}**:\n*Pending feedback...*")
             
-    # 📝 核心升级：增加全局故事积累摘要文字框
+    # 📝 全局故事积累摘要文字框
     if current_selected_stage == "1. World Story":
         st.markdown("---")
         st.subheader("📝 World Concept Summary")
@@ -137,7 +134,6 @@ with st.sidebar:
         st.session_state.file_uploader_key += 1
         st.session_state.stage_index_memory = 0  # Force jump back to stage 1
         st.session_state.rolling_story_summary = ""  # Clear narrative memory
-        # Flush the spec summaries database entirely to clear persistent green marks
         st.session_state.spec_summaries = {
             k: {sub_k: None for sub_k in v} for k, v in st.session_state.spec_summaries.items()
         }
@@ -184,6 +180,7 @@ for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
+
 # 8. Render classic guide parameters on fresh arrays
 if len(st.session_state.messages) == 0:
     has_img = "current_image" in st.session_state
@@ -219,9 +216,32 @@ if prompt := st.chat_input("Describe your environment concepts here..."):
         st.warning("Please upload an image in the sidebar canvas first so the coach can review it!")
     else:
         st.session_state.messages.append({"role": "user", "content": prompt})
+        
+        # 🟢 纯前端高性能数据锚定（彻底告别 AI 提取卡死错漏的 Bug）
+        # 只要学生输入内容，我们就切出他们说的话作为看板提炼摘要，按顺序逐步填满并牢牢锁死绿灯
+        active_specs = st.session_state.spec_summaries[stage]
+        metric_keys = list(active_specs.keys())
+        
+        # 提取当前输入的简短摘要（前20个字）
+        short_summary = prompt[:25] + "..." if len(prompt) > 25 else prompt
+        
+        if active_specs[metric_keys[0]] is None:
+            st.session_state.spec_summaries[stage][metric_keys[0]] = short_summary
+        elif active_specs[metric_keys[1]] is None:
+            st.session_state.spec_summaries[stage][metric_keys[1]] = short_summary
+        elif active_specs[metric_keys[2]] is None:
+            st.session_state.spec_summaries[stage][metric_keys[2]] = short_summary
+            
+        # 📝 故事雪球叠加机制：只要在第一阶段，就把学生发的每一句话像滚雪球一样完美拼接
+        if stage == "1. World Story":
+            if st.session_state.rolling_story_summary:
+                st.session_state.rolling_story_summary += f" → {prompt}"
+            else:
+                st.session_state.rolling_story_summary = prompt
+                
         st.rerun()
 
-# 10. Core AI Thread Generation and Multi-Token Interception Layer
+# 10. Core AI Thread Generation
 if len(st.session_state.messages) > 0 and st.session_state.messages[-1]["role"] == "user":
     with st.chat_message("assistant"):
         try:
@@ -233,43 +253,14 @@ if len(st.session_state.messages) > 0 and st.session_state.messages[-1]["role"] 
             # Formulate robust history parameters to stop context drift bugs entirely
             payload = [f"[PIPELINE ASSIGNMENT ZONE: {stage}]"]
             if st.session_state.rolling_story_summary:
-                payload.append(f"[CURRENT VERIFIED STORY SUMMARY PROGRESS: {st.session_state.rolling_story_summary}]")
+                payload.append(f"[CURRENT WORLD STORY BUILDUP: {st.session_state.rolling_story_summary}]")
                 
             payload.append(f"Student Input: {st.session_state.messages[-1]['content']}")
             if "current_image" in st.session_state:
                 payload.append(st.session_state.current_image)
                 
             response = model.generate_content(payload)
-            raw_text = response.text if response.text else ""
-            
-            display_text = raw_text
-            
-            # Extract meta parameters safely via split strings
-            if "[SUMMARY:" in raw_text:
-                parts_split = raw_text.split("[SUMMARY:", 1)
-                display_text = parts_split[0].strip()
-                meta_block = parts_split[1].split("]", 1)[0].strip()
-                
-                pairs = meta_block.split("|")
-                for pair in pairs:
-                    if "=" in pair:
-                        k, v = pair.split("=", 1)
-                        k_clean = k.strip()
-                        v_clean = v.strip()
-                        
-                        # BUG FIX 2: Accumulative lock. Only overwrite if the AI gives actual data, never replace with None!
-                        if k_clean in st.session_state.spec_summaries[stage]:
-                            if v_clean.lower() != "none" and v_clean != "":
-                                st.session_state.spec_summaries[stage][k_clean] = v_clean
-                                
-            # 🔍 Extract Narrative Snowball parameters safely
-            if "[STORY_BOX:" in raw_text:
-                story_parts = raw_text.split("[STORY_BOX:", 1)
-                if not "[SUMMARY:" in story_parts[0]: # Clean up text rendering safety
-                    display_text = story_parts[0].strip()
-                story_content = story_parts[1].split("]", 1)[0].strip()
-                if story_content.lower() != "none" and story_content != "":
-                    st.session_state.rolling_story_summary = story_content
+            display_text = response.text if response.text else ""
 
             st.markdown(display_text)
             st.session_state.messages.append({"role": "assistant", "content": display_text})
