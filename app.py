@@ -2,12 +2,11 @@ import streamlit as st
 import google.generativeai as genai
 from PIL import Image
 import os
-import re
 
 # 1. Page Configuration
 st.set_page_config(page_title="AI Environment Design Coach", page_icon="🎨", layout="centered")
 
-# 2. Initialize Session State (Wipe bugs and set memory arrays)
+# 2. Initialize Session State (Bug Fixes: Save Key independently from clear actions)
 if "authenticated_key" not in st.session_state:
     st.session_state.authenticated_key = None
 
@@ -17,7 +16,7 @@ if "previous_stage" not in st.session_state:
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-# Persistent dictionary holding the real extracted summaries for each stage
+# Specifications Database: Dynamic Text summaries extracted from the AI tokens live
 if "spec_summaries" not in st.session_state:
     st.session_state.spec_summaries = {
         "1. World Story": {"Theme & Type": None, "World Narrative": None, "Architectural Identity": None},
@@ -31,7 +30,7 @@ if "spec_summaries" not in st.session_state:
 
 # 3. 🔑 Full-Screen Authentication Gate (Login Page)
 if st.session_state.authenticated_key is None:
-    # BUG FIX 1: Absolutely honor Stanley's 1600x600 layout proportion without vertical stretching
+    # 🖼️ 完美还原 1600x600 高清大图的自适应视效，不拉伸不扭曲
     if os.path.exists("login_banner.png"):
         st.image("login_banner.png", use_container_width=True)
     elif os.path.exists("login_banner.jpg"):
@@ -41,7 +40,7 @@ if st.session_state.authenticated_key is None:
         st.markdown("#### An AI-Guided Studio Critique System for Concept Art Education")
         
     st.write("---")
-    st.warning("👋 **Hello Student!** To unlock your Art Director Coach, please enter your personal Gemini API Key below.")
+    st.warning("👋 **Hello Student!** To unlock your AI EDC Art Director Coach, please enter your personal Gemini API Key below.")
     
     input_key = st.text_input(
         "🔑 Paste your Gemini API Key here and press Enter:", 
@@ -67,27 +66,24 @@ genai.configure(api_key=st.session_state.authenticated_key)
 
 
 # =====================================================================
-# 🚀 TARGET ENVIRONMENT ART BIBLE ENGINE
+# 🚀 THE FULL CLASSROOM PIPELINE (Stanley's Twin-Track Architecture)
 # =====================================================================
 
-# 5. BUG FIX 2: Layout Realignment. Put the Selector neatly inline or in an optimized grid block.
-header_col, selector_col = st.columns([3, 2])
+# 5. Dropdown Stage Selector (Exactly at its classic intuitive position)
+stage = st.selectbox(
+    "📍 Choose your active pipeline design assignment stage:",
+    [
+        "1. World Story",
+        "2. Exterior Reference",
+        "3. Exterior Thumbnail",
+        "4. Interior Reference",
+        "5. Interior Thumbnail",
+        "6. Exterior Polishing",
+        "7. Interior Polishing"
+    ]
+)
 
-with header_col:
-    st.title("AI Design Coach")
-    st.markdown("##### Studio Critique System (ASMT 02 & 03)")
-
-with selector_col:
-    st.write(" ") # Padding alignment
-    stage = st.selectbox(
-        "🎬 Pipeline Stage:",
-        [
-            "1. World Story", "2. Exterior Reference", "3. Exterior Thumbnail",
-            "4. Interior Reference", "5. Interior Thumbnail", "6. Exterior Polishing", "7. Interior Polishing"
-        ]
-    )
-
-# 🛑 BUG FIX: Clear canvas assets and chat history smoothly when changing pipeline branches
+# 🛑 BUG FIX: Wipe history and canvas ONLY when switching stages, keeping key intact
 if stage != st.session_state.previous_stage:
     st.session_state.previous_stage = stage
     st.session_state.messages = []
@@ -103,87 +99,124 @@ if "file_uploader_key" not in st.session_state:
     st.session_state.file_uploader_key = 0
 
 
-# 6. 🖼️ Sidebar Workspace: Canvas Setup & Real AI Summary Dashboard
+# 6. 🖼️ Sidebar: Design Canvas & The Live Summarize Dashboard Checklist
 with st.sidebar:
-    st.title("🖼️ Workspace Canvas")
+    st.title("🖼️ Design Canvas")
     st.markdown("---")
     
     needs_img = stage != "1. World Story"
     if needs_img:
         up_file = st.file_uploader(
-            f"Upload Graphic Asset:", 
+            "Upload your design, thumbnail, or reference image here", 
             type=["png", "jpg", "jpeg"],
             key=f"uploader_{st.session_state.file_uploader_key}"
         )
+        st.caption("Mandatory for Reference, Thumbnail, and Polishing stages.")
+        
         if up_file:
             st.session_state.current_image = Image.open(up_file)
         
         if "current_image" in st.session_state and st.session_state.current_image is not None:
-            st.image(st.session_state.current_image, caption="Active Artwork Review", use_container_width=True)
-            if st.button("🗑️ Clear Canvas Asset", use_container_width=True):
+            st.image(st.session_state.current_image, caption="Current Review Object", use_container_width=True)
+            if st.button("🗑️ Remove Image", use_container_width=True):
                 del st.session_state.current_image
                 st.session_state.file_uploader_key += 1
                 st.rerun()
         st.markdown("---")
         
-    # 🟢 Real Intelligence Tracking Board (No more blind automatic counts!)
+    # 📋 The Live Summarize Checklist Panel
     st.subheader("📋 Design Specification")
-    st.caption("Summarized details extracted live from studio discourse.")
+    st.caption("This board auto-updates and turns green based on your chat answers.")
     
     active_specs = st.session_state.spec_summaries[stage]
-    stage_complete = True
+    all_passed = True
     
-    for metric, text_value in active_specs.items():
-        if text_value and text_value.strip() != "":
-            # Turn beautifully green only when the AI extracts real architectural context
-            st.success(f"✅ **{metric}**:\n{text_value}")
+    for metric, text_summary in active_specs.items():
+        if text_summary and text_summary.strip().lower() != "none" and text_summary.strip() != "":
+            # Turns beautiful green only when a real conceptual value exists
+            st.success(f"✅ **{metric}**:\n{text_summary}")
         else:
             st.info(f"⭕ **{metric}**:\n*Pending feedback...*")
-            stage_complete = False
+            all_passed = False
             
-    if stage_complete:
-        st.markdown("---")
-        st.balloons()
-        st.success("🌟 **[STAGE READY]** Core specs met! Switch selector above to progress the pipeline.")
+    st.markdown("---")
+    
+    # 🔄 BUG FIX 1: Classic Reset Button returned! Safely clear chat/canvas without logging out
+    if st.button("🔄 Start New Critique", use_container_width=True):
+        st.session_state.messages = []
+        if "current_image" in st.session_state:
+            del st.session_state.current_image
+        st.session_state.file_uploader_key += 1
+        st.rerun()
+        
+    if st.button("🚪 Disconnect API Key", use_container_width=True):
+        st.session_state.authenticated_key = None
+        st.rerun()
 
 
-# 7. Guidelines Dashboard Container
-with st.expander("📖 Guide: Assignment Milestones", expanded=False):
+# 7. Main Area: Header UI Setup
+st.title("AI Environment Design Coach")
+st.markdown("#### An AI-Guided Studio Critique System for Concept Art Education")
+st.info("**AI EDC Hint:** Talk with the studio Art Director to refine your Environment Art Bible requirements.")
+
+with st.expander("📖 How to Start & User Guide", expanded=False):
+    st.write("**This tool simulates a studio critique with an art director to guide environment design thinking.**")
     st.markdown("""
-    * **Workflow**: Fill the description or canvas inside the sidebar, talk to the Coach, and watch your specification summary build up on the left side menu!
+    1. Choose your **design stage**.
+    2. Briefly describe your **idea** in the chat.
+    3. Upload an **image** if needed (for Reference, Thumbnail, or Polishing stages).
     """)
 
-# Render historical messages cleanly without parsing system hashes
+st.markdown("---")
+
+# Render active chat threads
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
-# Prompt reminders for empty message arrays
+
+# 8. 🚀 THE RETURNED CLASSIC GUIDE BOX (Triggers when history is empty)
 if len(st.session_state.messages) == 0:
     has_img = "current_image" in st.session_state
-    example_prompts = {
-        "1. World Story": "My concept is an old abandoned train station inside a swamp forest.",
-        "2. Exterior Reference": "I've uploaded reference boards for decayed wood architecture textures.",
-        "3. Exterior Thumbnail": "Uploading my silhouette composition sketch to evaluate depth separation.",
-        "4. Interior Reference": "Sourcing references for a tight industrial bunker command layout room.",
-        "5. Interior Thumbnail": "This layout blueprint sets the entryways and coordinates the core desk prop.",
-        "6. Exterior Polishing": "Currently blending moss textures over stone steps under heavy ambient fog.",
-        "7. Interior Polishing": "Refining wood speculative values matching single window directional moon rays."
-    }
     
-    if needs_img and not has_img:
-        st.error("⚠️ **Asset Missing**: Upload matching artwork inside the **Sidebar Workspace Canvas** first to start review.")
-    else:
-        st.info(f"💡 **Suggested Prompt for {stage[3:]}:** \"{example_prompts[stage]}\"")
+    example_text = {
+        "1. World Story": "My environment is an abandoned station in a cyberpunk city.",
+        "2. Exterior Reference": "I've uploaded a reference for sharp gothic canyons; I want to focus on the cliff rock shapes.",
+        "3. Exterior Thumbnail": "These are my wide-angle thumbnail layout sketches; I'm comparing the depth of three planes.",
+        "4. Interior Reference": "I've uploaded reference images for an industrial bunker control room layout.",
+        "5. Interior Thumbnail": "This is my top-view schematic mapping out the doorways and the central hero prop table.",
+        "6. Exterior Polishing": "I'm refining the moss blending textures and adjusting the distance atmospheric fog layers.",
+        "7. Interior Polishing": "I am painting the micro specular highlights on desks matching single window cool moonlight rays."
+    }
 
-# 8. Processing Chat Stream Interception & Dynamic Data Extraction
-if prompt := st.chat_input("Input design intent..."):
+    with st.container():
+        st.markdown(f"### 🚀 Starting {stage[3:]} Stage")
+
+        if needs_img:
+            if not has_img:
+                st.error("⚠️ **Step 1:** Please upload your image in the **Sidebar Design Canvas** first.")
+                st.markdown("> *Wait for the coach to see your work before describing it.*")
+            else:
+                st.success("✅ **Step 1 Complete:** Image uploaded successfully.")
+                st.markdown(f"**Step 2:** Briefly explain your design intent in the chat box below.")
+                st.markdown(f"*Try saying: \"{example_text[stage]}\"*")
+        else:
+            st.markdown(f"**Step 1:** Briefly explain your world concept in the chat box below.")
+            st.markdown(f"*Try saying: \"{example_text[stage]}\"*")
+        
+        st.markdown("---")
+
+
+# 9. Chat Input Mechanics
+if prompt := st.chat_input("Describe your environment concepts here..."):
     if needs_img and "current_image" not in st.session_state:
-        st.error("Upload graphical file first!")
+        st.warning("Please upload an image in the sidebar canvas first so the coach can review it!")
     else:
         st.session_state.messages.append({"role": "user", "content": prompt})
         st.rerun()
 
+
+# 10. AI Engine Model Query & Robust Block String Interception
 if len(st.session_state.messages) > 0 and st.session_state.messages[-1]["role"] == "user":
     with st.chat_message("assistant"):
         try:
@@ -192,39 +225,36 @@ if len(st.session_state.messages) > 0 and st.session_state.messages[-1]["role"] 
                 system_instruction=SYSTEM_INSTRUCTION
             )
             
-            # Pack current pipeline phase as high-priority guidance metadata
-            formatted_prompt = f"[STUDIO SYSTEM PHASE: {stage}]\nStudent Input: {st.session_state.messages[-1]['content']}"
-            payload = [formatted_prompt]
+            payload = [f"[PIPELINE ASSIGNMENT ZONE: {stage}]\nStudent Input: {st.session_state.messages[-1]['content']}"]
             if "current_image" in st.session_state:
                 payload.append(st.session_state.current_image)
                 
             response = model.generate_content(payload)
             raw_text = response.text if response.text else ""
             
-            # 🔍 Data Extractor: Check if the raw text contains the structural summary syntax array
-            # Expected format from secrets instruction: [SUMMARY: Metric1=Text|Metric2=Text|Metric3=Text]
-            cleaned_text = raw_text
-            match = re.search(r"\[SUMMARY:\s*(.*?)\]", raw_text, re.DOTALL)
-            
-            if match:
-                summary_block = match.group(1)
-                # Cut the hidden token cleanly out so the student never sees the ugly raw tag strings
-                cleaned_text = raw_text.replace(match.group(0), "").strip()
+            # Robust Extraction Engine: Cut through ugly markers via pure text splitting block
+            display_text = raw_text
+            if "[SUMMARY:" in raw_text:
+                parts_split = raw_text.split("[SUMMARY:", 1)
+                display_text = parts_split[0].strip()
+                meta_block = parts_split[1].split("]", 1)[0].strip()
                 
-                # Split entries via delimiter safely
-                pairs = summary_block.split("|")
+                # Split criteria pairs safely via pipe delimiters
+                pairs = meta_block.split("|")
                 for pair in pairs:
                     if "=" in pair:
                         k, v = pair.split("=", 1)
                         k_clean = k.strip()
                         v_clean = v.strip()
-                        # Update the specific parameter tracking index seamlessly if valid
-                        if k_clean in st.session_state.spec_summaries[stage] and v_clean.lower() != "none" and v_clean != "":
-                            st.session_state.spec_summaries[stage][k_clean] = v_clean
-            
-            st.markdown(cleaned_text)
-            st.session_state.messages.append({"role": "assistant", "content": cleaned_text})
+                        
+                        # Verify dictionary and override None values smoothly
+                        if k_clean in st.session_state.spec_summaries[stage]:
+                            if v_clean.lower() != "none" and v_clean != "":
+                                st.session_state.spec_summaries[stage][k_clean] = v_clean
+                                
+            st.markdown(display_text)
+            st.session_state.messages.append({"role": "assistant", "content": display_text})
             st.rerun()
             
         except Exception as e:
-            st.error(f"Engine Core Fault: {str(e)}")
+            st.error(f"Engine Core Exception Error: {str(e)}")
