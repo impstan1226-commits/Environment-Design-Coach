@@ -5,22 +5,52 @@ from PIL import Image
 # 1. Page Configuration
 st.set_page_config(page_title="AI Environment Design Coach", page_icon="🎨", layout="centered")
 
-# 2. Configure API (System Instruction from Secrets)
-SYSTEM_INSTRUCTION = st.secrets["COMMAND_CENTER"]
+# 2. Initialize Session State for API Key
+if "authenticated_key" not in st.session_state:
+    st.session_state.authenticated_key = None
 
-# 3. Sidebar: Canvas & API Key Area
-with st.sidebar:
-    st.title("🔑 Student Authentication")
-    student_key = st.text_input(
-        "Enter your Gemini API Key:", 
-        type="password", 
-        placeholder="AIzaSy...",
-        help="Get your free API Key from https://aistudio.google.com"
-    )
-    st.markdown("[Get Free Gemini API Key 🔗](https://aistudio.google.com)")
-    st.markdown("---")
+# 3. 🔑 Full-Screen Authentication Gate (Login Page)
+if st.session_state.authenticated_key is None:
+    st.title("🎨 Welcome to AI Environment Design Coach")
+    st.markdown("#### An AI-Guided Studio Critique System for Concept Art Education")
+    st.write("---")
     
+    st.warning("👋 **Hello Student!** To unlock your Art Director Coach, please enter your personal Gemini API Key below.")
+    
+    # Render the input box right in the center of the main page
+    input_key = st.text_input(
+        "🔑 Paste your Gemini API Key here and press Enter:", 
+        type="password", 
+        placeholder="AIzaSy..."
+    )
+    
+    st.info(
+        "💡 **How to get your free API Key:**\n"
+        "1. Sign in to [Google AI Studio 🔗](https://aistudio.google.com) with your Google account.\n"
+        "2. Click the **Create API Key** button.\n"
+        "3. Copy the generated key and paste it above."
+    )
+    
+    # If the student inputs a key and hits Enter, save it and rerun to unlock the app
+    if input_key:
+        st.session_state.authenticated_key = input_key.strip()
+        st.rerun()
+        
+    st.stop() # Strictly stop rendering the rest of the app until authenticated
+
+# 4. Configure API (Only reached after successful authentication)
+SYSTEM_INSTRUCTION = st.secrets["COMMAND_CENTER"]
+genai.configure(api_key=st.session_state.authenticated_key)
+
+
+# =====================================================================
+# 🚀 THE FULL APP UNLOCKED (Only visible after student inputs the Key)
+# =====================================================================
+
+# 5. Sidebar: Canvas Area
+with st.sidebar:
     st.title("🖼️ Design Canvas")
+    st.markdown("---")
     
     up_file = st.file_uploader("Upload your design, thumbnail, or reference image here", type=["png", "jpg", "jpeg"])
     st.caption("Mandatory for Reference, Thumbnail, and Polishing stages.")
@@ -41,19 +71,13 @@ with st.sidebar:
         if "current_image" in st.session_state:
             del st.session_state.current_image
         st.rerun()
+        
+    # Optional: Allow logout/changing key from the sidebar
+    if st.button("🚪 Disconnect API Key", use_container_width=True):
+        st.session_state.authenticated_key = None
+        st.rerun()
 
-# 3.5 API Verification Interceptor
-if not student_key:
-    st.title("AI Environment Design Coach")
-    st.markdown("#### An AI-Guided Studio Critique System for Concept Art Education")
-    st.warning("👋 **Welcome, Student!** Please grab your free Gemini API Key from **Google AI Studio** and paste it into the sidebar on the left to unlock your Art Director Coach.")
-    st.info("💡 **Quick Guide:**\n1. Sign in to [Google AI Studio](https://aistudio.google.com) with your Google account.\n2. Click **Create API Key**.\n3. Copy the key and paste it into the **Student Authentication** box on the left.")
-    st.stop()  # Stop executing the rest of the script until the key is provided
-else:
-    # Configure the API with the student's personal key
-    genai.configure(api_key=student_key)
-
-# 4. Main Area: Header
+# 6. Main Area: Header
 st.title("AI Environment Design Coach")
 st.markdown("#### An AI-Guided Studio Critique System for Concept Art Education")
 st.info("**Key Idea:** AI-powered studio critique system that guides environment design thinking through structured questioning.")
@@ -66,7 +90,7 @@ with st.expander("📖 How to Start & User Guide", expanded=True):
     3. Upload an **image** if needed (for Reference, Thumbnail, or Polishing stages).
     """)
 
-# 5. Stage Selector
+# 7. Stage Selector
 stage = st.selectbox(
     "📍 Choose your design stage",
     ["Story", "Reference", "Thumbnail", "Polishing"]
@@ -74,7 +98,7 @@ stage = st.selectbox(
 
 st.markdown("---")
 
-# 6. Initialize Chat History
+# 8. Initialize Chat History
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
@@ -83,7 +107,7 @@ for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
-# 7. 🚀 重新找回的动态引导步骤 (Starting Stage Section)
+# 9. 🚀 重新找回的动态引导步骤 (Starting Stage Section)
 if len(st.session_state.messages) == 0:
     has_img = "current_image" in st.session_state
     needs_img = stage in ["Reference", "Thumbnail", "Polishing"]
@@ -114,7 +138,7 @@ if len(st.session_state.messages) == 0:
         
         st.markdown("---")
 
-# 8. Chat Input & AI Logic
+# 10. Chat Input & AI Logic
 if prompt := st.chat_input("Describe your concept here..."):
     if stage in ["Reference", "Thumbnail", "Polishing"] and "current_image" not in st.session_state:
         st.warning("Please upload an image in the sidebar first so the coach can review it!")
