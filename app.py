@@ -76,17 +76,17 @@ STAGE_DESCRIPTIONS = {
 }
 
 OPENING_QUESTIONS = {
-    "1. World Story": "Before we design anything, define the foundation clearly: what is the main theme and environment type of your world?",
-    "2. Exterior Reference": "Start by connecting your exterior reference to the story. What terrain type best supports this world?",
-    "3. Exterior Thumbnail": "Focus on structure before detail. What composition guide are you using to control the viewer's eye?",
-    "4. Interior Reference": "Before choosing interior references, define the function. What spatial zone are you designing?",
-    "5. Interior Thumbnail": "Start with movement. Where does the viewer enter, and how should the pathway guide the eye?",
-    "6. Exterior Polishing": "Before adding effects, define the surface logic. What is the dominant landscape material?",
-    "7. Interior Polishing": "Before final details, define the material logic. What texture or material detail must be clearly visible?"
+    "1. World Story": "Before we draw anything, think like a director: what kind of place is this, and what feeling should the audience sense when they first enter it?",
+    "2. Exterior Reference": "Look at your world story first: what kind of outdoor landform would naturally shape the life, danger, or isolation of this place?",
+    "3. Exterior Thumbnail": "Before adding detail, decide the viewing experience: where should the audience look first, and how should the environment guide their eye?",
+    "4. Interior Reference": "Before choosing interior references, imagine the daily use of the space: what kind of activity or behaviour must this room support?",
+    "5. Interior Thumbnail": "Think of the viewer walking into the room: where do they enter, and what should pull their attention deeper into the space?",
+    "6. Exterior Polishing": "Before polishing, look at the ground, walls, and surrounding landscape: what material should visually dominate this exterior world?",
+    "7. Interior Polishing": "Before final details, look at the surfaces closest to the viewer: what texture or material evidence should make this interior feel used and believable?"
 }
 
 # Gemini model. Keep this easy to change if Google updates model availability.
-MODEL_NAME = "gemini-1.5-flash-latest"
+MODEL_NAME = "gemini-3.5-flash"
 
 # =========================================================
 # 3. Session State
@@ -185,6 +185,7 @@ def build_response_schema(stage: str):
                 "properties": {
                     metric: {
                         "type": "string",
+                        "nullable": True,
                         "description": "Short confirmed metric value, or null if not clearly confirmed."
                     }
                     for metric in metrics
@@ -193,6 +194,7 @@ def build_response_schema(stage: str):
             },
             "rolling_summary_patch": {
                 "type": "string",
+                "nullable": True,
                 "description": "Only for Stage 1. Updated world concept summary, or null/empty for other stages."
             }
         },
@@ -254,9 +256,11 @@ STRICT BEHAVIOUR RULES:
 5. If the current target metric is not yet clearly answered, ask exactly ONE focused question about that metric.
 6. Do not ask about later metrics until the current target metric is accepted.
 7. Only extract a metric value when the student has clearly provided a concrete design decision.
-8. For extracted_metrics, only the current target metric may receive a real value. All other metrics must be null.
-9. Existing locked values must not be rewritten.
-10. Keep extracted metric values short: ideally 3 to 8 words.
+8. The metric name is for internal checking only. Do not literally ask the student to "fill in" or "state" that metric.
+9. Ask creative, reflective design questions that help the student discover the metric indirectly.
+10. For extracted_metrics, only the current target metric may receive a real value. All other metrics must be null.
+11. Existing locked values must not be rewritten.
+12. Keep extracted metric values short: ideally 3 to 8 words.
 
 WORLD SUMMARY RULES:
 1. Only when the current stage is "1. World Story", update rolling_summary_patch.
