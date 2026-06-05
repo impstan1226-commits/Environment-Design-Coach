@@ -32,11 +32,12 @@ if st.session_state.authenticated_key is None:
         placeholder="AIzaSy..."
     )
     
+    # 💡 优化指引文本：精准对齐 Google AI Studio 真实界面按钮名称
     st.info(
         "💡 **How to get your free API Key:**\n"
         "1. Sign in to [Google AI Studio 🔗](https://aistudio.google.com) with your Google account.\n"
-        "2. Click the **Create API Key** button.\n"
-        "3. Copy the generated key and paste it above."
+        "2. Click the **Get API key** button.\n"
+        "3. Copy the key and paste it above."
     )
     
     # If the student inputs a key and hits Enter, save it and rerun to unlock the app
@@ -142,7 +143,7 @@ if len(st.session_state.messages) == 0:
                 st.markdown(f"*Try saying: \"{example_text[stage]}\"*")
         else:
             st.markdown(f"**Step 1:** Briefly explain your world concept in the chat box below.")
-            st.markdown(f"*Try saying: \"{example_text[stage]}\"*")
+            st.markdown(f"*Try signing: \"{example_text[stage]}\"*")
         
         st.markdown("---")
 
