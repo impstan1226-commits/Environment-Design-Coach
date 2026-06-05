@@ -269,14 +269,18 @@ WORLD SUMMARY RULES:
 4. For stages 2 to 7, rolling_summary_patch must be an empty string "".
 
 OUTPUT RULE:
-Return only a valid JSON object with this exact structure:
+Return only one complete valid JSON object. Do not use Markdown. Do not add text before or after JSON.
+All values must be strings only. Never use null. Use an empty string "" when there is no value.
+The JSON must follow this structure:
 {{
-  "ai_critique": "...",
+  "ai_critique": "short student-facing critique and one question",
   "extracted_metrics": {{
-    "metric name": null or "short confirmed value"
+    "metric name": ""
   }},
-  "rolling_summary_patch": null or "updated summary"
+  "rolling_summary_patch": ""
 }}
+Keep ai_critique under 80 Chinese characters or 45 English words.
+Keep rolling_summary_patch under 120 Chinese characters or 70 English words.
 """
     return instruction.strip()
 
@@ -541,7 +545,7 @@ if len(st.session_state.messages) > 0 and st.session_state.messages[-1]["role"] 
                 temperature=0.2,
                 response_mime_type="application/json",
                 response_schema=build_response_schema(stage),
-                max_output_tokens=1024
+                max_output_tokens=4096
             )
 
             response = model.generate_content(
