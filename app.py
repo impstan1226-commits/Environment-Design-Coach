@@ -1,6 +1,7 @@
 import streamlit as st
 import google.generativeai as genai
 from PIL import Image
+import os
 
 # 1. Page Configuration
 st.set_page_config(page_title="AI Environment Design Coach", page_icon="🎨", layout="centered")
@@ -11,8 +12,16 @@ if "authenticated_key" not in st.session_state:
 
 # 3. 🔑 Full-Screen Authentication Gate (Login Page)
 if st.session_state.authenticated_key is None:
-    st.title("🎨 Welcome to AI Environment Design Coach")
-    st.markdown("#### An AI-Guided Studio Critique System for Concept Art Education")
+    # 🖼️ 完美适配：精准自动识别并加载你在根目录上传的 login_banner.png
+    if os.path.exists("login_banner.png"):
+        st.image("login_banner.png", use_container_width=True)
+    elif os.path.exists("login_banner.jpg"):
+        st.image("login_banner.jpg", use_container_width=True)
+    else:
+        # 备用文字，防止未来图片不小心丢失时网页报错
+        st.title("🎨 Welcome to AI Environment Design Coach")
+        st.markdown("#### An AI-Guided Studio Critique System for Concept Art Education")
+        
     st.write("---")
     
     st.warning("👋 **Hello Student!** To unlock your Art Director Coach, please enter your personal Gemini API Key below.")
@@ -150,17 +159,4 @@ if len(st.session_state.messages) > 0 and st.session_state.messages[-1]["role"] 
     with st.chat_message("assistant"):
         try:
             model = genai.GenerativeModel(
-                model_name="gemini-3.1-flash-lite-preview", 
-                system_instruction=SYSTEM_INSTRUCTION
-            )
-            parts = [f"[CONTEXT: Design Stage = {stage}]\nStudent Input: {st.session_state.messages[-1]['content']}"]
-            if "current_image" in st.session_state:
-                parts.append(st.session_state.current_image)
-            
-            response = model.generate_content(parts)
-            if response.text:
-                st.markdown(response.text)
-                st.session_state.messages.append({"role": "assistant", "content": response.text})
-                st.rerun()
-        except Exception as e:
-            st.error(f"Error: {str(e)}")
+                model_name="gem
