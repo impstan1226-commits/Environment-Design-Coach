@@ -440,22 +440,19 @@ if stage != STAGE_OPTIONS[st.session_state.stage_index_memory]:
     st.session_state.file_uploader_key += 1
     st.rerun()
 
-# Manual story context for later-stage usage when session memory is lost.
+# Manual story context for later-stage usage only when Stage 1 session memory is not available.
 if stage != "1. World Story":
-    default_context = st.session_state.rolling_story_summary or st.session_state.manual_world_context
-    st.session_state.manual_world_context = st.text_area(
-        "📝 Paste your World Concept Summary here before starting this stage:",
-        value=default_context,
-        height=120,
-        placeholder="Paste the Stage 1 World Concept Summary here so the coach can connect this stage to your story."
-    )
+    if st.session_state.rolling_story_summary:
+        st.success("✅ World Concept Summary found from Stage 1. The coach will use it for this stage.")
+    else:
+        st.session_state.manual_world_context = st.text_area(
+            "📝 Step 1: Paste your World Concept Summary here before starting this stage:",
+            value=st.session_state.manual_world_context,
+            height=120,
+            placeholder="Paste the Stage 1 World Concept Summary here so the coach can connect this stage to your story."
+        )
 
 st.markdown("---")
-
-# Opening prompt when no chat exists.
-if len(st.session_state.messages) == 0:
-    with st.chat_message("assistant"):
-        st.markdown(OPENING_QUESTIONS[stage])
 
 # Render chat history.
 for message in st.session_state.messages:
@@ -480,13 +477,23 @@ if len(st.session_state.messages) == 0:
     with st.container():
         st.markdown(f"### 🚀 Starting {stage[3:]} Stage")
         if needs_img:
-            if not has_img:
-                st.error("⚠️ **Step 1:** Please upload your image in the **Sidebar Design Canvas** first.")
-                st.markdown("> *Wait for the coach to see your work before describing it.*")
+            has_world_context = bool((st.session_state.rolling_story_summary or st.session_state.manual_world_context).strip())
+
+            if has_world_context:
+                st.success("✅ **Step 1 Complete:** World Concept Summary is available.")
             else:
-                st.success("✅ **Step 1 Complete:** Image uploaded successfully.")
-                st.markdown("**Step 2:** Briefly explain your design intent in the chat box below.")
+                st.error("⚠️ **Step 1:** Please paste your World Concept Summary above first.")
+
+            if not has_img:
+                st.error("⚠️ **Step 2:** Please upload your image in the **Sidebar Design Canvas**.")
+            else:
+                st.success("✅ **Step 2 Complete:** Image uploaded successfully.")
+
+            if has_world_context and has_img:
+                st.markdown("**Step 3:** Briefly explain what aspect of this design you want the coach to review.")
                 st.markdown(f"*Try saying: \"{example_text[stage]}\"*")
+            else:
+                st.markdown("> *The coach will begin only after the story context and image are both ready.*")
         else:
             st.markdown("**Step 1:** Briefly explain your world concept in the chat box below.")
             st.markdown(f"*Try saying: \"{example_text[stage]}\"*")
@@ -496,7 +503,11 @@ if len(st.session_state.messages) == 0:
 # 10. Handle Chat Input
 # =========================================================
 if prompt := st.chat_input("Describe your environment concepts here..."):
-    if needs_img and "current_image" not in st.session_state:
+    has_world_context = bool((st.session_state.rolling_story_summary or st.session_state.manual_world_context).strip())
+
+    if stage != "1. World Story" and not has_world_context:
+        st.warning("Please paste your World Concept Summary before starting this stage.")
+    elif needs_img and "current_image" not in st.session_state:
         st.warning("Please upload an image in the sidebar canvas first so the coach can review it!")
     else:
         st.session_state.messages.append({"role": "user", "content": prompt})
