@@ -66,13 +66,13 @@ STAGE_METRICS = {
 }
 
 STAGE_DESCRIPTIONS = {
-    "1. World Story": "Define the core world idea, narrative direction, and the main structure that links the exterior world to a possible interior space.",
-    "2. Exterior Reference": "Select exterior references that support the world logic, terrain, climate, flora, and building language.",
-    "3. Exterior Thumbnail": "Test whether the composition, value, mood, and focal point clearly communicate the story before polishing.",
-    "4. Interior Reference": "Select interior references that support the spatial function, structure, and cultural logic.",
+    "1. World Story": "Define the story foundation: world feeling, narrative situation, and the main exterior structure that can lead into the interior.",
+    "2. Exterior Reference": "Select exterior references that support the terrain, climate, vegetation, and architectural language of the world.",
+    "3. Exterior Thumbnail": "Test whether the composition, value arrangement, and focal point can clearly express the story before polishing.",
+    "4. Interior Reference": "Select interior references that support the spatial function, structure, culture, and lived logic.",
     "5. Interior Thumbnail": "Clarify circulation, focal element, prop grouping, and readable interior layout.",
-    "6. Exterior Polishing": "Refine time, lighting mood, atmosphere, depth, weathering, and environmental storytelling.",
-    "7. Interior Polishing": "Refine surface details, light flow, shading, and usage history."
+    "6. Exterior Polishing": "Refine exterior time, lighting mood, atmosphere, depth, and weathering effects.",
+    "7. Interior Polishing": "Refine interior surfaces, light flow, shading, usage marks, and history."
 }
 
 OPENING_QUESTIONS = {
@@ -85,27 +85,103 @@ OPENING_QUESTIONS = {
     "7. Interior Polishing": "Before final details, look at the surfaces closest to the viewer: what texture or material evidence should make this interior feel used and believable?"
 }
 
-STAGE_COMPLETION_MESSAGES = {
-    "en": {
-        "1. World Story": "Your world foundation is clear enough to continue. You may proceed to Exterior Reference if you feel ready. If you still want to develop it further, think about what kind of terrain, climate, and exterior reference would naturally support this world.",
-        "2. Exterior Reference": "Your exterior reference direction is clear enough to continue. You may proceed to Exterior Thumbnail if you feel ready. If you still want to develop it further, think about which reference elements should become the main visual priority in your composition.",
-        "3. Exterior Thumbnail": "Your exterior thumbnail direction is clear enough to continue. You may proceed to Interior Reference if you feel ready. If you still want to develop it further, think about whether the viewer can immediately read the story through the focal point and value structure.",
-        "4. Interior Reference": "Your interior reference direction is clear enough to continue. You may proceed to Interior Thumbnail if you feel ready. If you still want to develop it further, think about how the interior structure reflects the same world logic as the exterior.",
-        "5. Interior Thumbnail": "Your interior thumbnail direction is clear enough to continue. You may proceed to Exterior Polishing if you feel ready. If you still want to develop it further, think about whether the entry, focal element, and props guide the viewer clearly through the space.",
-        "6. Exterior Polishing": "Your exterior polishing direction is clear enough to continue. You may proceed to Interior Polishing if you feel ready. If you still want to develop it further, think about how lighting, atmosphere, and weathering can strengthen the story.",
-        "7. Interior Polishing": "Your interior polishing direction is clear enough for final refinement. If you still want to develop it further, think about whether the surface details, lighting, and usage marks clearly show how the space has been lived in."
+
+METRIC_GUIDANCE = {
+    "Theme & Type": {
+        "accept_when": "The student has made the world direction clear through story terms, setting, emotional tone, or genre-like clues. Accept natural descriptions such as realistic historical forest, post-apocalyptic city, fantasy cave village, abandoned sci-fi station, or quiet rural mountain life.",
+        "question_style": "Do not ask the student to choose a genre list. Guide them from story feeling: who is here, what kind of world this feels like, and what the audience should sense first."
     },
-    "zh": {
-        "1. World Story": "这个世界基础已经清楚，可以进入 Exterior Reference。如果你还想继续发展，可以再想想：什么样的地形、气候和室外参考最自然地支撑这个世界？",
-        "2. Exterior Reference": "室外参考方向已经清楚，可以进入 Exterior Thumbnail。如果你还想继续发展，可以再想想：哪些参考元素应该成为构图里的主要视觉重点？",
-        "3. Exterior Thumbnail": "室外草图方向已经清楚，可以进入 Interior Reference。如果你还想继续发展，可以再想想：观众能不能通过焦点和明暗结构马上读懂这个故事？",
-        "4. Interior Reference": "室内参考方向已经清楚，可以进入 Interior Thumbnail。如果你还想继续发展，可以再想想：室内结构如何延续室外的世界逻辑？",
-        "5. Interior Thumbnail": "室内草图方向已经清楚，可以进入 Exterior Polishing。如果你还想继续发展，可以再想想：入口、焦点元素和道具是否能清楚引导观众阅读空间？",
-        "6. Exterior Polishing": "室外打磨方向已经清楚，可以进入 Interior Polishing。如果你还想继续发展，可以再想想：光线、氛围和风化痕迹如何进一步加强故事？",
-        "7. Interior Polishing": "室内打磨方向已经清楚，可以进入最后整理。如果你还想继续发展，可以再想想：表面细节、光影和使用痕迹是否清楚说明这个空间如何被使用过？"
+    "World Narrative": {
+        "accept_when": "The student has explained what is happening in this world, who uses or inhabits the space, or what situation gives the environment meaning.",
+        "question_style": "Ask about the situation, daily life, conflict, purpose, or relationship between the character and the place."
+    },
+    "Primary Structure": {
+        "accept_when": "The student has identified a main exterior structure that can logically connect to an interior, such as a house, cabin, cave entrance, dungeon entrance, workshop, tower, gate, bunker, temple, or ruins.",
+        "question_style": "Ask what visible structure in the exterior will become the entry point or source for the later interior design."
+    },
+    "Terrain Type": {
+        "accept_when": "The student has clearly chosen the exterior landform or ground condition, such as mountain, swamp, desert, forest clearing, canyon, coastline, city ruin, cave mouth, or valley.",
+        "question_style": "Ask what landform would naturally support the world story and affect how characters move or survive."
+    },
+    "Climate & Flora": {
+        "accept_when": "The student has identified climate, season, vegetation, or plant reference direction that supports the environment.",
+        "question_style": "Ask how climate and plant life reveal the world’s condition rather than asking for random plant names."
+    },
+    "Architectural Style": {
+        "accept_when": "The student has described the exterior building language, construction influence, or style logic, such as wooden rural, stone medieval, industrial, nomadic, bunker-like, temple-based, or makeshift.",
+        "question_style": "Ask what construction language makes the structure belong to this world."
+    },
+    "Narrative Composition": {
+        "accept_when": "The student has described how the thumbnail composition communicates the story, such as isolation, danger, discovery, protection, scale, or journey.",
+        "question_style": "Ask whether the viewer can understand the story from the arrangement before reading any explanation."
+    },
+    "Value & Mood": {
+        "accept_when": "The student has identified value contrast, light-dark grouping, or mood direction in the thumbnail.",
+        "question_style": "Ask how light and dark areas support the emotional reading of the scene."
+    },
+    "Focal Point": {
+        "accept_when": "The student has stated the main visual focus or what the viewer should look at first.",
+        "question_style": "Ask what the audience should notice first and why it matters to the story."
+    },
+    "Spatial Zone": {
+        "accept_when": "The student has defined the interior type or zone, such as bedroom, workshop, cave chamber, hall, shrine, kitchen, control room, or storage area.",
+        "question_style": "Ask what activity this interior must support."
+    },
+    "Structural Reference": {
+        "accept_when": "The student has identified interior construction reference, such as beams, arches, cave walls, columns, ceiling type, supports, stairs, platforms, or wall structure.",
+        "question_style": "Ask what structural evidence makes the room feel believable."
+    },
+    "Style & Culture": {
+        "accept_when": "The student has linked interior design to cultural, historical, lifestyle, or world-specific visual logic.",
+        "question_style": "Ask what cultural or lifestyle clues should appear in the space."
+    },
+    "Entry & Pathways": {
+        "accept_when": "The student has clarified entrance, movement path, or circulation through the interior thumbnail.",
+        "question_style": "Ask how the viewer or character enters and moves through the room."
+    },
+    "Focal Element": {
+        "accept_when": "The student has chosen the central object, zone, or feature that anchors the interior, such as forge, bed, altar, table, machine, throne, fireplace, or workbench.",
+        "question_style": "Ask what object or area tells the audience the purpose of the room first."
+    },
+    "Props Arrangement": {
+        "accept_when": "The student has described how props are grouped, placed, or arranged to support function and story.",
+        "question_style": "Ask how props show daily use, habit, status, or history."
+    },
+    "Time & Lighting Mood": {
+        "accept_when": "The student has selected time of day and lighting mood for the exterior polish.",
+        "question_style": "Ask what time and light condition best supports the story mood."
+    },
+    "Atmosphere & Depth": {
+        "accept_when": "The student has described atmospheric depth such as mist, dust, haze, rain, snow, smoke, heat, distance fade, or clear layered air.",
+        "question_style": "Ask how atmosphere separates foreground, midground, and background."
+    },
+    "Weathered Effects": {
+        "accept_when": "The student has described exterior wear, age, damage, dirt, moss, rust, cracks, erosion, water stains, or environmental impact.",
+        "question_style": "Ask what marks prove the exterior has existed over time."
+    },
+    "Surface Details": {
+        "accept_when": "The student has described interior texture or material surface details such as wood grain, stone roughness, fabric, metal, dust, scratches, or handmade marks.",
+        "question_style": "Ask what close-up surface evidence makes the interior believable."
+    },
+    "Light Flow & Shading": {
+        "accept_when": "The student has explained how light enters, travels, casts shadows, or creates contrast in the interior.",
+        "question_style": "Ask how the light moves through the room and what it hides or reveals."
+    },
+    "Usage Marks & History": {
+        "accept_when": "The student has described signs of use, age, repair, routine, damage, storage, mess, or personal history inside the space.",
+        "question_style": "Ask what marks show that people have actually lived or worked there."
     }
 }
 
+STAGE_COMPLETION_PROMPTS = {
+    "1. World Story": "If you still want to develop this idea, you can think about what kind of terrain would naturally support this world and the main structure.",
+    "2. Exterior Reference": "If you still want to develop this stage, you can compare whether the terrain, climate, and architecture references are speaking the same visual language.",
+    "3. Exterior Thumbnail": "If you still want to develop this stage, you can test whether the story is readable before adding details.",
+    "4. Interior Reference": "If you still want to develop this stage, you can think about whether the interior references clearly support the activity, structure, and culture of the space.",
+    "5. Interior Thumbnail": "If you still want to develop this stage, you can check whether the viewer understands the entrance, focal element, and prop logic without explanation.",
+    "6. Exterior Polishing": "If you still want to develop this stage, you can refine how time, atmosphere, and weathering strengthen the story mood.",
+    "7. Interior Polishing": "If you still want to develop this stage, you can refine how surfaces, light, and usage marks reveal the history of the interior."
+}
 
 # Gemini model. Keep this easy to change if Google updates model availability.
 MODEL_NAME = "gemini-3.5-flash"
@@ -139,6 +215,9 @@ if "file_uploader_key" not in st.session_state:
 
 if "stage_index_memory" not in st.session_state:
     st.session_state.stage_index_memory = 0
+
+if "stage_ready_notice" not in st.session_state:
+    st.session_state.stage_ready_notice = False
 
 # =========================================================
 # 4. Helper Functions
@@ -239,10 +318,18 @@ def build_ai_instruction(stage: str, student_input: str, has_image: bool):
     )
 
     active_metric_rule = (
-        f"The current target metric is: {active_metric}."
+        f"The current target checkpoint is: {active_metric}. "
+        f"Acceptance guide: {METRIC_GUIDANCE.get(active_metric, {}).get('accept_when', '')} "
+        f"Question style: {METRIC_GUIDANCE.get(active_metric, {}).get('question_style', '')}"
         if active_metric
-        else "All metrics for this stage are already completed. Give a brief final refinement comment only. Do not force the student to move on."
+        else "All checkpoints for this stage are already completed. Give a brief final refinement comment only."
     )
+
+    recent_context = []
+    for m in st.session_state.messages[-8:]:
+        role = "Student" if m.get("role") == "user" else "Coach"
+        recent_context.append(f"{role}: {m.get('content', '')}")
+    recent_context_text = "\n".join(recent_context)
 
     locked_specs_text = json.dumps(completed_specs, ensure_ascii=False, indent=2)
 
@@ -264,6 +351,9 @@ ALREADY LOCKED DESIGN SPECIFICATION VALUES:
 WORLD CONCEPT CONTEXT:
 {world_context if world_context else "No world concept context has been provided yet."}
 
+RECENT CONVERSATION CONTEXT:
+{recent_context_text if recent_context_text else "No prior conversation in this stage."}
+
 STUDENT'S LATEST INPUT:
 {student_input}
 
@@ -273,16 +363,19 @@ IMAGE STATUS:
 STRICT BEHAVIOUR RULES:
 1. {language_rule}
 2. The visible critique must be short: 1 to 3 sentences only.
-3. Do not invent story, architecture, terrain, culture, props, materials, lighting, or emotional meaning that the student has not stated or shown.
-4. Follow the turn protocol strictly. {active_metric_rule}
-5. If the current target metric is not yet clearly answered, ask exactly ONE focused question about that metric.
-6. Do not ask about later metrics until the current target metric is accepted.
-7. Only extract a metric value when the student has clearly provided a concrete design decision.
-8. The metric name is for internal checking only. Do not literally ask the student to "fill in" or "state" that metric.
-9. Ask creative, reflective design questions that help the student discover the metric indirectly.
-10. For extracted_metrics, only the current target metric may receive a real value. All other metrics must be an empty string "".
-11. Existing locked values must not be rewritten.
-12. Keep extracted metric values short: ideally 3 to 8 words.
+3. Behave like a studio director training the student to think, not like a form asking for checklist answers.
+4. Do not ask direct checklist questions such as "what is your theme and type?" or "state your architectural identity".
+5. Do not invent story, architecture, terrain, culture, props, materials, lighting, or emotional meaning that the student has not stated or shown.
+6. Follow the turn protocol strictly. {active_metric_rule}
+7. If the current target checkpoint is not yet clearly answered, ask exactly ONE focused, story-led design question about that checkpoint.
+8. Do not ask about later checkpoints until the current target checkpoint is accepted.
+9. Only extract a checkpoint value when the student has clearly provided a concrete design decision in the latest input, recent conversation, or confirmed summary.
+10. The checkpoint name is for internal checking only. Do not literally ask the student to "fill in" or "state" that checkpoint.
+11. Ask creative, reflective design questions that help the student discover the checkpoint indirectly.
+12. For extracted_metrics, only the current target checkpoint may receive a real value. All other checkpoints must be an empty string "".
+13. Existing locked values must not be rewritten.
+14. If the student only greets you or says something unrelated, do not extract any checkpoint. Briefly invite them to describe the story situation, character, place, or feeling.
+15. Keep extracted checkpoint values short: ideally 3 to 8 words.
 
 WORLD SUMMARY RULES:
 1. Only when the current stage is "1. World Story", update rolling_summary_patch.
@@ -323,25 +416,6 @@ def apply_ai_state_update(stage: str, ai_data: dict):
         summary_patch = ai_data.get("rolling_summary_patch")
         if is_meaningful_value(summary_patch):
             st.session_state.rolling_story_summary = summary_patch.strip()
-
-
-
-def contains_cjk(text: str) -> bool:
-    return bool(re.search(r"[\u4e00-\u9fff]", text or ""))
-
-def completion_message(stage: str, student_input: str) -> str:
-    lang = "zh" if contains_cjk(student_input) else "en"
-    return STAGE_COMPLETION_MESSAGES[lang].get(stage, "")
-
-def go_to_next_stage():
-    current_index = st.session_state.stage_index_memory
-    if current_index < len(STAGE_OPTIONS) - 1:
-        st.session_state.stage_index_memory = current_index + 1
-        st.session_state.messages = []
-        if "current_image" in st.session_state:
-            del st.session_state.current_image
-        st.session_state.file_uploader_key += 1
-        st.rerun()
 
 # =========================================================
 # 5. Full-Screen Authentication Gate
@@ -479,11 +553,11 @@ stage = st.selectbox(
     STAGE_OPTIONS,
     index=st.session_state.stage_index_memory
 )
-st.caption(f"Current working stage: **{stage}**")
 
 if stage != STAGE_OPTIONS[st.session_state.stage_index_memory]:
     st.session_state.stage_index_memory = STAGE_OPTIONS.index(stage)
     st.session_state.messages = []
+    st.session_state.stage_ready_notice = False
     if "current_image" in st.session_state:
         del st.session_state.current_image
     st.session_state.file_uploader_key += 1
@@ -501,13 +575,26 @@ if stage != "1. World Story":
             placeholder="Paste the Stage 1 World Concept Summary here so the coach can connect this stage to your story."
         )
 
-st.markdown("---")
+# Stage completion action button.
+if st.session_state.stage_ready_notice and stage != STAGE_OPTIONS[-1]:
+    next_stage = STAGE_OPTIONS[STAGE_OPTIONS.index(stage) + 1]
+    st.success(f"✅ This stage is clear enough. You may continue developing it, or move to **{next_stage}** when ready.")
+    col_next, col_keep = st.columns(2)
+    with col_next:
+        if st.button(f"➡️ Move to {next_stage}", use_container_width=True):
+            st.session_state.stage_index_memory = STAGE_OPTIONS.index(next_stage)
+            st.session_state.messages = []
+            st.session_state.stage_ready_notice = False
+            if "current_image" in st.session_state:
+                del st.session_state.current_image
+            st.session_state.file_uploader_key += 1
+            st.rerun()
+    with col_keep:
+        if st.button("💬 Continue developing this stage", use_container_width=True):
+            st.session_state.stage_ready_notice = False
+            st.rerun()
 
-# Stage completion action button. The student controls whether to move to the next stage.
-if get_active_metric(stage) is None and stage != STAGE_OPTIONS[-1]:
-    st.success("✅ This stage checklist is complete. You may continue developing it here, or move to the next stage when ready.")
-    if st.button(f"➡️ Move to {STAGE_OPTIONS[STAGE_OPTIONS.index(stage) + 1]}"):
-        go_to_next_stage()
+st.markdown("---")
 
 # Render chat history.
 for message in st.session_state.messages:
@@ -565,6 +652,7 @@ if prompt := st.chat_input("Describe your environment concepts here..."):
     elif needs_img and "current_image" not in st.session_state:
         st.warning("Please upload an image in the sidebar canvas first so the coach can review it!")
     else:
+        st.session_state.stage_ready_notice = False
         st.session_state.messages.append({"role": "user", "content": prompt})
         st.rerun()
 
@@ -611,15 +699,18 @@ if len(st.session_state.messages) > 0 and st.session_state.messages[-1]["role"] 
             if not display_text:
                 display_text = "I need a clearer design decision before I can update the board. Please clarify the current design point."
 
-            active_before_update = get_active_metric(stage)
             apply_ai_state_update(stage, ai_data)
-            active_after_update = get_active_metric(stage)
 
-            # If the student's latest answer completed the final checkpoint, append a gentle choice-based reminder.
-            if active_before_update is not None and active_after_update is None:
-                reminder = completion_message(stage, student_prompt)
-                if reminder:
-                    display_text = f"{display_text}\n\n{reminder}"
+            stage_is_complete = all(
+                is_meaningful_value(st.session_state.spec_summaries[stage].get(metric))
+                for metric in STAGE_METRICS[stage]
+            )
+            if stage_is_complete:
+                st.session_state.stage_ready_notice = True
+                if stage != STAGE_OPTIONS[-1]:
+                    display_text += "\n\nThis stage is clear enough to continue. If you still want to develop it, you can think about: " + STAGE_COMPLETION_PROMPTS.get(stage, "")
+                else:
+                    display_text += "\n\nThis final stage is clear enough. You can continue refining details, or use your notes to support your final Art Bible presentation."
 
             st.markdown(display_text)
             st.session_state.messages.append({"role": "assistant", "content": display_text})
