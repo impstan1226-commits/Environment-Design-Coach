@@ -88,8 +88,8 @@ OPENING_QUESTIONS = {
 
 METRIC_GUIDANCE = {
     "Theme & Type": {
-        "accept_when": "The student has made the world direction clear through story terms, setting, emotional tone, or genre-like clues. Accept natural descriptions such as realistic historical forest, post-apocalyptic city, fantasy cave village, abandoned sci-fi station, or quiet rural mountain life.",
-        "question_style": "Do not ask the student to choose a genre list. Guide them from story feeling: who is here, what kind of world this feels like, and what the audience should sense first."
+        "accept_when": "The student has made the world direction clear through natural story description, setting, or visual direction. Accept simple descriptions such as a lonely blacksmith in a realistic forest, a magic house, a ruined city, a cave village, or an abandoned station.",
+        "question_style": "Do not ask for genre, mood, atmosphere, or theme words directly. If the student is only greeting, simply ask them to tell you the rough story in plain words: who or what the place is for, where it is, and what is happening there."
     },
     "World Narrative": {
         "accept_when": "The student has explained what is happening in this world, who uses or inhabits the space, or what situation gives the environment meaning.",
@@ -112,15 +112,15 @@ METRIC_GUIDANCE = {
         "question_style": "Ask what construction language makes the structure belong to this world."
     },
     "Narrative Composition": {
-        "accept_when": "The student has described how the thumbnail composition communicates the story, such as isolation, danger, discovery, protection, scale, or journey.",
-        "question_style": "Ask whether the viewer can understand the story from the arrangement before reading any explanation."
+        "accept_when": "The student has chosen or discussed a thumbnail arrangement and explained a visual intention, such as foreground framing, hiding/revealing the house, scale contrast, discovery, protection, isolation, journey, or where the story should be read in the layout.",
+        "question_style": "Ask whether the arrangement of shapes, scale, and placement helps the viewer understand the story before reading any explanation."
     },
     "Value & Mood": {
         "accept_when": "The student has identified value contrast, light-dark grouping, or mood direction in the thumbnail.",
         "question_style": "Ask how light and dark areas support the emotional reading of the scene."
     },
     "Focal Point": {
-        "accept_when": "The student has stated the main visual focus or what the viewer should look at first.",
+        "accept_when": "The student has stated the main visual focus, such as the house, entrance, book, tree, character, prop, or light target, or clearly says what the viewer should look at first.",
         "question_style": "Ask what the audience should notice first and why it matters to the story."
     },
     "Spatial Zone": {
@@ -368,13 +368,13 @@ STRICT BEHAVIOUR RULES:
 5. Do not invent story, architecture, terrain, culture, props, materials, lighting, or emotional meaning that the student has not stated or shown.
 6. Follow the turn protocol strictly. {active_metric_rule}
 7. If the current target checkpoint is not yet clearly answered, ask exactly ONE focused, story-led design question about that checkpoint.
-8. Do not ask about later checkpoints until the current target checkpoint is accepted.
-9. Only extract a checkpoint value when the student has clearly provided a concrete design decision in the latest input, recent conversation, or confirmed summary.
+8. The conversation should generally move through checkpoints in order, but do not ignore clear student decisions that answer a later checkpoint.
+9. Extract checkpoint values when the student has clearly provided concrete design decisions in the latest input, recent conversation, confirmed summary, or uploaded image discussion.
 10. The checkpoint name is for internal checking only. Do not literally ask the student to "fill in" or "state" that checkpoint.
 11. Ask creative, reflective design questions that help the student discover the checkpoint indirectly.
-12. For extracted_metrics, only the current target checkpoint may receive a real value. All other checkpoints must be an empty string "".
+12. For extracted_metrics, you may fill any clearly answered checkpoint for the current stage, but do not fill vague, guessed, or unrelated values. Leave unanswered checkpoints as empty strings "".
 13. Existing locked values must not be rewritten.
-14. If the student only greets you or says something unrelated, do not extract any checkpoint. Briefly invite them to describe the story situation, character, place, or feeling.
+14. If the student only greets you or says something unrelated, do not extract any checkpoint. Reply naturally and invite them to describe the idea in plain words. Avoid professional checklist terms such as theme, genre, mood, or atmosphere in the greeting response.
 15. Keep extracted checkpoint values short: ideally 3 to 8 words.
 
 WORLD SUMMARY RULES:
@@ -400,17 +400,19 @@ Keep rolling_summary_patch under 120 Chinese characters or 70 English words.
     return instruction.strip()
 
 def apply_ai_state_update(stage: str, ai_data: dict):
-    """Update dashboard and summary without allowing overwrites or hallucinated mass updates."""
-    active_metric = get_active_metric(stage)
+    """Update dashboard and summary without allowing overwrites.
+    V8 allows non-linear checkpoint locking when the student clearly answers a later point.
+    """
     extracted = ai_data.get("extracted_metrics", {})
 
-    if active_metric and isinstance(extracted, dict):
-        candidate = extracted.get(active_metric)
-        current_value = st.session_state.spec_summaries[stage].get(active_metric)
+    if isinstance(extracted, dict):
+        for metric in STAGE_METRICS[stage]:
+            candidate = extracted.get(metric)
+            current_value = st.session_state.spec_summaries[stage].get(metric)
 
-        # Lock once only. Never overwrite a green value.
-        if current_value is None and is_meaningful_value(candidate):
-            st.session_state.spec_summaries[stage][active_metric] = shorten_metric_value(candidate)
+            # Lock once only. Never overwrite a green value.
+            if current_value is None and is_meaningful_value(candidate):
+                st.session_state.spec_summaries[stage][metric] = shorten_metric_value(candidate)
 
     if stage == "1. World Story":
         summary_patch = ai_data.get("rolling_summary_patch")
