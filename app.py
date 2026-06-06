@@ -231,6 +231,11 @@ if "stage_ready_notice" not in st.session_state:
 if "stage_ready_language" not in st.session_state:
     st.session_state.stage_ready_language = "en"
 
+# Once the student chooses to continue developing a completed stage,
+# do not show the stage-complete prompt again for that same stage.
+if "stage_ready_dismissed" not in st.session_state:
+    st.session_state.stage_ready_dismissed = {stage: False for stage in STAGE_OPTIONS}
+
 # =========================================================
 # 4. Helper Functions
 # =========================================================
@@ -666,6 +671,7 @@ if st.session_state.stage_ready_notice:
                 if follow_up:
                     st.session_state.messages.append({"role": "assistant", "content": follow_up})
                 st.session_state.stage_ready_notice = False
+                st.session_state.stage_ready_dismissed[stage] = True
                 st.rerun()
 
 # =========================================================
@@ -772,7 +778,7 @@ if len(st.session_state.messages) > 0 and st.session_state.messages[-1]["role"] 
                 is_meaningful_value(st.session_state.spec_summaries[stage].get(metric))
                 for metric in STAGE_METRICS[stage]
             )
-            if stage_is_complete:
+            if stage_is_complete and not st.session_state.stage_ready_dismissed.get(stage, False):
                 st.session_state.stage_ready_notice = True
                 st.session_state.stage_ready_language = detect_language_from_text(student_prompt)
 
