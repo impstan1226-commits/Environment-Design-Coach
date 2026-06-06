@@ -85,6 +85,15 @@ OPENING_QUESTIONS = {
     "7. Interior Polishing": "Before final details, look at the surfaces closest to the viewer: what texture or material evidence should make this interior feel used and believable?"
 }
 
+UPLOAD_REQUIREMENTS = {
+    "2. Exterior Reference": "Upload your exterior reference moodboard.",
+    "3. Exterior Thumbnail": "Upload your exterior thumbnail sheet with A, B, C options.",
+    "4. Interior Reference": "Upload your interior reference moodboard.",
+    "5. Interior Thumbnail": "Upload your interior top view and thumbnail sheet with A, B, C options.",
+    "6. Exterior Polishing": "Upload your exterior final artwork or polishing progress.",
+    "7. Interior Polishing": "Upload your interior final artwork or polishing progress."
+}
+
 
 METRIC_GUIDANCE = {
     "Theme & Type": {
@@ -219,6 +228,9 @@ if "stage_index_memory" not in st.session_state:
 if "stage_ready_notice" not in st.session_state:
     st.session_state.stage_ready_notice = False
 
+if "stage_ready_language" not in st.session_state:
+    st.session_state.stage_ready_language = "en"
+
 # =========================================================
 # 4. Helper Functions
 # =========================================================
@@ -250,6 +262,46 @@ def shorten_metric_value(value, max_words=8):
     if len(words) > max_words:
         return " ".join(words[:max_words])
     return value
+
+def detect_language_from_text(text):
+    """Simple language detector for stage-completion messages."""
+    if not text:
+        return "en"
+    if re.search(r"[\u4e00-\u9fff]", text):
+        return "zh"
+    return "en"
+
+def get_stage_ready_message(stage, next_stage=None, lang="en"):
+    """Message shown below the latest AI reply when all checkpoints in a stage are complete."""
+    if lang == "zh":
+        if next_stage:
+            return f"目前这个阶段的信息已经足够进入下一阶段。你可以选择继续发展这个阶段，或进入 **{next_stage}**。"
+        return "目前最后阶段的信息已经足够完整。你可以继续微调细节，或把这些记录用于最终 Art Bible presentation。"
+    if next_stage:
+        return f"This stage is clear enough to continue. You may keep developing this stage, or move to **{next_stage}**."
+    return "This final stage is clear enough. You may continue refining details, or use these notes for your final Art Bible presentation."
+
+def get_continue_development_prompt(stage, lang="en"):
+    """Follow-up prompt generated only when the student chooses to continue developing."""
+    zh_prompts = {
+        "1. World Story": "如果你想继续发展，可以进一步思考：这个世界的地形如何支撑角色的生活方式和主要建筑？",
+        "2. Exterior Reference": "如果你想继续发展，可以比较：地形、气候植物和建筑参考是否属于同一种视觉语言？",
+        "3. Exterior Thumbnail": "如果你想继续发展，可以检查：在还没加细节之前，观众能不能从构图中看懂故事？",
+        "4. Interior Reference": "如果你想继续发展，可以思考：这些室内参考是否清楚支持空间活动、结构和文化背景？",
+        "5. Interior Thumbnail": "如果你想继续发展，可以检查：观众是否能不靠解释就看懂入口、焦点元素和道具逻辑？",
+        "6. Exterior Polishing": "如果你想继续发展，可以进一步强化：时间、空气层次和老化痕迹如何让故事更可信？",
+        "7. Interior Polishing": "如果你想继续发展，可以继续推敲：表面、光影和使用痕迹如何说明这个空间的历史？"
+    }
+    en_prompts = {
+        "1. World Story": "If you still want to develop this idea, think about what kind of terrain would naturally support the character’s life and the main structure.",
+        "2. Exterior Reference": "If you still want to develop this stage, compare whether the terrain, climate, flora, and architecture references speak the same visual language.",
+        "3. Exterior Thumbnail": "If you still want to develop this stage, test whether the story is readable from the composition before adding details.",
+        "4. Interior Reference": "If you still want to develop this stage, check whether the interior references clearly support the activity, structure, and culture of the space.",
+        "5. Interior Thumbnail": "If you still want to develop this stage, check whether the viewer can understand the entrance, focal element, and prop logic without explanation.",
+        "6. Exterior Polishing": "If you still want to develop this stage, refine how time, atmosphere, and weathering make the story more believable.",
+        "7. Interior Polishing": "If you still want to develop this stage, refine how surfaces, light, and usage marks reveal the history of the interior."
+    }
+    return (zh_prompts if lang == "zh" else en_prompts).get(stage, "")
 
 def extract_json_object(raw_text):
     """Robustly parse Gemini JSON, including accidental Markdown fences."""
@@ -374,7 +426,7 @@ STRICT BEHAVIOUR RULES:
 11. Ask creative, reflective design questions that help the student discover the checkpoint indirectly.
 12. For extracted_metrics, you may fill any clearly answered checkpoint for the current stage, but do not fill vague, guessed, or unrelated values. Leave unanswered checkpoints as empty strings "".
 13. Existing locked values must not be rewritten.
-14. If the student only greets you or says something unrelated, do not extract any checkpoint. Reply naturally and invite them to describe the idea in plain words. Avoid professional checklist terms such as theme, genre, mood, or atmosphere in the greeting response.
+14. If the student only greets you or says something unrelated, do not extract any checkpoint and do not mention professional terms such as theme, genre, mood, atmosphere, composition, value, or focal point. Reply naturally in plain language and invite the student to describe the idea as a simple story: who or what is there, where it is, and what is happening.
 15. Keep extracted checkpoint values short: ideally 3 to 8 words.
 
 WORLD SUMMARY RULES:
@@ -477,12 +529,13 @@ with st.sidebar:
     st.markdown("---")
 
     if needs_img:
+        upload_instruction = UPLOAD_REQUIREMENTS.get(current_selected_stage, "Upload your design image for this stage.")
         up_file = st.file_uploader(
-            "Upload your design, thumbnail, or reference image here",
+            upload_instruction,
             type=["png", "jpg", "jpeg"],
             key=f"uploader_{st.session_state.file_uploader_key}"
         )
-        st.caption("Mandatory for Reference, Thumbnail, and Polishing stages.")
+        st.caption(f"Required upload: {upload_instruction}")
 
         if up_file:
             st.session_state.current_image = Image.open(up_file)
@@ -526,6 +579,7 @@ with st.sidebar:
             del st.session_state.current_image
         st.session_state.file_uploader_key += 1
         st.session_state.stage_index_memory = 0
+        st.session_state.stage_ready_language = "en"
         st.session_state.rolling_story_summary = ""
         st.session_state.manual_world_context = ""
         st.session_state.spec_summaries = fresh_spec_summaries()
@@ -547,7 +601,7 @@ with st.expander("📖 How to Start & User Guide", expanded=False):
     st.markdown("""
     1. Choose your **design stage**.
     2. Briefly describe your **idea** in the chat.
-    3. Upload an **image** if needed (for Reference, Thumbnail, and Polishing stages).
+    3. Upload the required **stage image** when needed (moodboard, thumbnail sheet, top view, or polishing progress).
     """)
 
 stage = st.selectbox(
@@ -560,6 +614,7 @@ if stage != STAGE_OPTIONS[st.session_state.stage_index_memory]:
     st.session_state.stage_index_memory = STAGE_OPTIONS.index(stage)
     st.session_state.messages = []
     st.session_state.stage_ready_notice = False
+    st.session_state.stage_ready_language = "en"
     if "current_image" in st.session_state:
         del st.session_state.current_image
     st.session_state.file_uploader_key += 1
@@ -577,31 +632,41 @@ if stage != "1. World Story":
             placeholder="Paste the Stage 1 World Concept Summary here so the coach can connect this stage to your story."
         )
 
-# Stage completion action button.
-if st.session_state.stage_ready_notice and stage != STAGE_OPTIONS[-1]:
-    next_stage = STAGE_OPTIONS[STAGE_OPTIONS.index(stage) + 1]
-    st.success(f"✅ This stage is clear enough. You may continue developing it, or move to **{next_stage}** when ready.")
-    col_next, col_keep = st.columns(2)
-    with col_next:
-        if st.button(f"➡️ Move to {next_stage}", use_container_width=True):
-            st.session_state.stage_index_memory = STAGE_OPTIONS.index(next_stage)
-            st.session_state.messages = []
-            st.session_state.stage_ready_notice = False
-            if "current_image" in st.session_state:
-                del st.session_state.current_image
-            st.session_state.file_uploader_key += 1
-            st.rerun()
-    with col_keep:
-        if st.button("💬 Continue developing this stage", use_container_width=True):
-            st.session_state.stage_ready_notice = False
-            st.rerun()
-
 st.markdown("---")
 
 # Render chat history.
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
+
+
+# Stage completion action appears directly below the latest AI reply.
+if st.session_state.stage_ready_notice:
+    current_index = STAGE_OPTIONS.index(stage)
+    next_stage = STAGE_OPTIONS[current_index + 1] if current_index < len(STAGE_OPTIONS) - 1 else None
+    lang = st.session_state.get("stage_ready_language", "en")
+
+    with st.chat_message("assistant"):
+        st.success(get_stage_ready_message(stage, next_stage, lang))
+        col_next, col_keep = st.columns(2)
+
+        with col_next:
+            if next_stage and st.button(f"➡️ Move to {next_stage}", use_container_width=True, key=f"move_next_{stage}"):
+                st.session_state.stage_index_memory = STAGE_OPTIONS.index(next_stage)
+                st.session_state.messages = []
+                st.session_state.stage_ready_notice = False
+                if "current_image" in st.session_state:
+                    del st.session_state.current_image
+                st.session_state.file_uploader_key += 1
+                st.rerun()
+
+        with col_keep:
+            if st.button("💬 Continue developing this stage", use_container_width=True, key=f"continue_{stage}"):
+                follow_up = get_continue_development_prompt(stage, lang)
+                if follow_up:
+                    st.session_state.messages.append({"role": "assistant", "content": follow_up})
+                st.session_state.stage_ready_notice = False
+                st.rerun()
 
 # =========================================================
 # 9. Guide Boxes
@@ -629,9 +694,9 @@ if len(st.session_state.messages) == 0:
                 st.error("⚠️ **Step 1:** Please paste your World Concept Summary above first.")
 
             if not has_img:
-                st.error("⚠️ **Step 2:** Please upload your image in the **Sidebar Design Canvas**.")
+                st.error(f"⚠️ **Step 2:** {UPLOAD_REQUIREMENTS.get(stage, 'Please upload your image in the Sidebar Design Canvas.')}")
             else:
-                st.success("✅ **Step 2 Complete:** Image uploaded successfully.")
+                st.success(f"✅ **Step 2 Complete:** {UPLOAD_REQUIREMENTS.get(stage, 'Image uploaded successfully.')}")
 
             if has_world_context and has_img:
                 st.markdown("**Step 3:** Briefly explain what aspect of this design you want the coach to review.")
@@ -709,10 +774,7 @@ if len(st.session_state.messages) > 0 and st.session_state.messages[-1]["role"] 
             )
             if stage_is_complete:
                 st.session_state.stage_ready_notice = True
-                if stage != STAGE_OPTIONS[-1]:
-                    display_text += "\n\nThis stage is clear enough to continue. If you still want to develop it, you can think about: " + STAGE_COMPLETION_PROMPTS.get(stage, "")
-                else:
-                    display_text += "\n\nThis final stage is clear enough. You can continue refining details, or use your notes to support your final Art Bible presentation."
+                st.session_state.stage_ready_language = detect_language_from_text(student_prompt)
 
             st.markdown(display_text)
             st.session_state.messages.append({"role": "assistant", "content": display_text})
