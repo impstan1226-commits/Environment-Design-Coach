@@ -31,17 +31,17 @@ STAGE_METRICS = {
     "1. World Story": [
         "Theme & Type",
         "World Narrative",
-        "Architectural Identity"
+        "Primary Structure"
     ],
     "2. Exterior Reference": [
         "Terrain Type",
-        "Flora Reference",
+        "Climate & Flora",
         "Architectural Style"
     ],
     "3. Exterior Thumbnail": [
-        "Composition Guide",
-        "Value in Environment",
-        "Horizon & Eye-Level"
+        "Narrative Composition",
+        "Value & Mood",
+        "Focal Point"
     ],
     "4. Interior Reference": [
         "Spatial Zone",
@@ -50,29 +50,29 @@ STAGE_METRICS = {
     ],
     "5. Interior Thumbnail": [
         "Entry & Pathways",
-        "Focal Hero Furniture",
+        "Focal Element",
         "Props Arrangement"
     ],
     "6. Exterior Polishing": [
-        "Landscape Material",
-        "Lighting & Atmosphere",
+        "Time & Lighting Mood",
+        "Atmosphere & Depth",
         "Weathered Effects"
     ],
     "7. Interior Polishing": [
-        "Texture/Material Detail",
-        "Light Flow & Contrast",
+        "Surface Details",
+        "Light Flow & Shading",
         "Usage Marks & History"
     ]
 }
 
 STAGE_DESCRIPTIONS = {
-    "1. World Story": "Define the core world idea before any visual design decision.",
-    "2. Exterior Reference": "Select exterior references that support the world logic, terrain, vegetation, and building language.",
-    "3. Exterior Thumbnail": "Clarify composition, value hierarchy, depth, horizon, and eye-level before polishing.",
+    "1. World Story": "Define the core world idea, narrative direction, and the main structure that links the exterior world to a possible interior space.",
+    "2. Exterior Reference": "Select exterior references that support the world logic, terrain, climate, flora, and building language.",
+    "3. Exterior Thumbnail": "Test whether the composition, value, mood, and focal point clearly communicate the story before polishing.",
     "4. Interior Reference": "Select interior references that support the spatial function, structure, and cultural logic.",
-    "5. Interior Thumbnail": "Clarify circulation, focal furniture, prop grouping, and readable interior layout.",
-    "6. Exterior Polishing": "Refine exterior material, atmosphere, lighting, weathering, and environmental storytelling.",
-    "7. Interior Polishing": "Refine interior textures, artificial/natural light flow, contrast, and usage history."
+    "5. Interior Thumbnail": "Clarify circulation, focal element, prop grouping, and readable interior layout.",
+    "6. Exterior Polishing": "Refine time, lighting mood, atmosphere, depth, weathering, and environmental storytelling.",
+    "7. Interior Polishing": "Refine surface details, light flow, shading, and usage history."
 }
 
 OPENING_QUESTIONS = {
@@ -84,6 +84,28 @@ OPENING_QUESTIONS = {
     "6. Exterior Polishing": "Before polishing, look at the ground, walls, and surrounding landscape: what material should visually dominate this exterior world?",
     "7. Interior Polishing": "Before final details, look at the surfaces closest to the viewer: what texture or material evidence should make this interior feel used and believable?"
 }
+
+STAGE_COMPLETION_MESSAGES = {
+    "en": {
+        "1. World Story": "Your world foundation is clear enough to continue. You may proceed to Exterior Reference if you feel ready. If you still want to develop it further, think about what kind of terrain, climate, and exterior reference would naturally support this world.",
+        "2. Exterior Reference": "Your exterior reference direction is clear enough to continue. You may proceed to Exterior Thumbnail if you feel ready. If you still want to develop it further, think about which reference elements should become the main visual priority in your composition.",
+        "3. Exterior Thumbnail": "Your exterior thumbnail direction is clear enough to continue. You may proceed to Interior Reference if you feel ready. If you still want to develop it further, think about whether the viewer can immediately read the story through the focal point and value structure.",
+        "4. Interior Reference": "Your interior reference direction is clear enough to continue. You may proceed to Interior Thumbnail if you feel ready. If you still want to develop it further, think about how the interior structure reflects the same world logic as the exterior.",
+        "5. Interior Thumbnail": "Your interior thumbnail direction is clear enough to continue. You may proceed to Exterior Polishing if you feel ready. If you still want to develop it further, think about whether the entry, focal element, and props guide the viewer clearly through the space.",
+        "6. Exterior Polishing": "Your exterior polishing direction is clear enough to continue. You may proceed to Interior Polishing if you feel ready. If you still want to develop it further, think about how lighting, atmosphere, and weathering can strengthen the story.",
+        "7. Interior Polishing": "Your interior polishing direction is clear enough for final refinement. If you still want to develop it further, think about whether the surface details, lighting, and usage marks clearly show how the space has been lived in."
+    },
+    "zh": {
+        "1. World Story": "这个世界基础已经清楚，可以进入 Exterior Reference。如果你还想继续发展，可以再想想：什么样的地形、气候和室外参考最自然地支撑这个世界？",
+        "2. Exterior Reference": "室外参考方向已经清楚，可以进入 Exterior Thumbnail。如果你还想继续发展，可以再想想：哪些参考元素应该成为构图里的主要视觉重点？",
+        "3. Exterior Thumbnail": "室外草图方向已经清楚，可以进入 Interior Reference。如果你还想继续发展，可以再想想：观众能不能通过焦点和明暗结构马上读懂这个故事？",
+        "4. Interior Reference": "室内参考方向已经清楚，可以进入 Interior Thumbnail。如果你还想继续发展，可以再想想：室内结构如何延续室外的世界逻辑？",
+        "5. Interior Thumbnail": "室内草图方向已经清楚，可以进入 Exterior Polishing。如果你还想继续发展，可以再想想：入口、焦点元素和道具是否能清楚引导观众阅读空间？",
+        "6. Exterior Polishing": "室外打磨方向已经清楚，可以进入 Interior Polishing。如果你还想继续发展，可以再想想：光线、氛围和风化痕迹如何进一步加强故事？",
+        "7. Interior Polishing": "室内打磨方向已经清楚，可以进入最后整理。如果你还想继续发展，可以再想想：表面细节、光影和使用痕迹是否清楚说明这个空间如何被使用过？"
+    }
+}
+
 
 # Gemini model. Keep this easy to change if Google updates model availability.
 MODEL_NAME = "gemini-3.5-flash"
@@ -219,7 +241,7 @@ def build_ai_instruction(stage: str, student_input: str, has_image: bool):
     active_metric_rule = (
         f"The current target metric is: {active_metric}."
         if active_metric
-        else "All metrics for this stage are already completed. Give a brief final refinement comment only."
+        else "All metrics for this stage are already completed. Give a brief final refinement comment only. Do not force the student to move on."
     )
 
     locked_specs_text = json.dumps(completed_specs, ensure_ascii=False, indent=2)
@@ -302,6 +324,25 @@ def apply_ai_state_update(stage: str, ai_data: dict):
         if is_meaningful_value(summary_patch):
             st.session_state.rolling_story_summary = summary_patch.strip()
 
+
+
+def contains_cjk(text: str) -> bool:
+    return bool(re.search(r"[\u4e00-\u9fff]", text or ""))
+
+def completion_message(stage: str, student_input: str) -> str:
+    lang = "zh" if contains_cjk(student_input) else "en"
+    return STAGE_COMPLETION_MESSAGES[lang].get(stage, "")
+
+def go_to_next_stage():
+    current_index = st.session_state.stage_index_memory
+    if current_index < len(STAGE_OPTIONS) - 1:
+        st.session_state.stage_index_memory = current_index + 1
+        st.session_state.messages = []
+        if "current_image" in st.session_state:
+            del st.session_state.current_image
+        st.session_state.file_uploader_key += 1
+        st.rerun()
+
 # =========================================================
 # 5. Full-Screen Authentication Gate
 # =========================================================
@@ -354,6 +395,9 @@ needs_img = current_selected_stage != "1. World Story"
 
 with st.sidebar:
     st.title("🖼️ Design Canvas")
+    st.markdown("---")
+    st.subheader("📍 Current Stage")
+    st.info(current_selected_stage)
     st.markdown("---")
 
     if needs_img:
@@ -435,6 +479,7 @@ stage = st.selectbox(
     STAGE_OPTIONS,
     index=st.session_state.stage_index_memory
 )
+st.caption(f"Current working stage: **{stage}**")
 
 if stage != STAGE_OPTIONS[st.session_state.stage_index_memory]:
     st.session_state.stage_index_memory = STAGE_OPTIONS.index(stage)
@@ -457,6 +502,12 @@ if stage != "1. World Story":
         )
 
 st.markdown("---")
+
+# Stage completion action button. The student controls whether to move to the next stage.
+if get_active_metric(stage) is None and stage != STAGE_OPTIONS[-1]:
+    st.success("✅ This stage checklist is complete. You may continue developing it here, or move to the next stage when ready.")
+    if st.button(f"➡️ Move to {STAGE_OPTIONS[STAGE_OPTIONS.index(stage) + 1]}"):
+        go_to_next_stage()
 
 # Render chat history.
 for message in st.session_state.messages:
@@ -560,7 +611,15 @@ if len(st.session_state.messages) > 0 and st.session_state.messages[-1]["role"] 
             if not display_text:
                 display_text = "I need a clearer design decision before I can update the board. Please clarify the current design point."
 
+            active_before_update = get_active_metric(stage)
             apply_ai_state_update(stage, ai_data)
+            active_after_update = get_active_metric(stage)
+
+            # If the student's latest answer completed the final checkpoint, append a gentle choice-based reminder.
+            if active_before_update is not None and active_after_update is None:
+                reminder = completion_message(stage, student_prompt)
+                if reminder:
+                    display_text = f"{display_text}\n\n{reminder}"
 
             st.markdown(display_text)
             st.session_state.messages.append({"role": "assistant", "content": display_text})
