@@ -584,7 +584,9 @@ with st.sidebar:
             del st.session_state.current_image
         st.session_state.file_uploader_key += 1
         st.session_state.stage_index_memory = 0
+        st.session_state.stage_ready_notice = False
         st.session_state.stage_ready_language = "en"
+        st.session_state.stage_ready_dismissed = {stage: False for stage in STAGE_OPTIONS}
         st.session_state.rolling_story_summary = ""
         st.session_state.manual_world_context = ""
         st.session_state.spec_summaries = fresh_spec_summaries()
@@ -592,6 +594,7 @@ with st.sidebar:
 
     if st.button("🚪 Disconnect API Key", use_container_width=True):
         st.session_state.authenticated_key = None
+        st.session_state.stage_ready_notice = False
         st.rerun()
 
 # =========================================================
@@ -646,7 +649,13 @@ for message in st.session_state.messages:
 
 
 # Stage completion action appears directly below the latest AI reply.
-if st.session_state.stage_ready_notice:
+# Only show it after an actual AI conversation and only when the current stage is truly complete.
+current_stage_is_complete_for_notice = all(
+    is_meaningful_value(st.session_state.spec_summaries[stage].get(metric))
+    for metric in STAGE_METRICS[stage]
+)
+
+if st.session_state.stage_ready_notice and len(st.session_state.messages) > 0 and current_stage_is_complete_for_notice:
     current_index = STAGE_OPTIONS.index(stage)
     next_stage = STAGE_OPTIONS[current_index + 1] if current_index < len(STAGE_OPTIONS) - 1 else None
     lang = st.session_state.get("stage_ready_language", "en")
