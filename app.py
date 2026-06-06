@@ -379,7 +379,7 @@ def build_ai_instruction(stage: str, student_input: str, has_image: bool):
         f"Acceptance guide: {METRIC_GUIDANCE.get(active_metric, {}).get('accept_when', '')} "
         f"Question style: {METRIC_GUIDANCE.get(active_metric, {}).get('question_style', '')}"
         if active_metric
-        else "All checkpoints for this stage are already completed. Give a brief final refinement comment only."
+        else "All checkpoints for this stage are already completed. The student has chosen or may choose to continue developing. Respond to the latest input naturally, update the summary if relevant, and ask exactly ONE deeper design-development question. Do not suggest moving to the next stage unless the system button handles it."
     )
 
     recent_context = []
@@ -676,9 +676,8 @@ if st.session_state.stage_ready_notice and len(st.session_state.messages) > 0 an
 
         with col_keep:
             if st.button("💬 Continue developing this stage", use_container_width=True, key=f"continue_{stage}"):
-                follow_up = get_continue_development_prompt(stage, lang)
-                if follow_up:
-                    st.session_state.messages.append({"role": "assistant", "content": follow_up})
+                # Dismiss the stage-complete prompt. Do not inject a repeated canned question.
+                # The student may continue typing normally, and the AI will continue developing the idea.
                 st.session_state.stage_ready_notice = False
                 st.session_state.stage_ready_dismissed[stage] = True
                 st.rerun()
@@ -787,9 +786,13 @@ if len(st.session_state.messages) > 0 and st.session_state.messages[-1]["role"] 
                 is_meaningful_value(st.session_state.spec_summaries[stage].get(metric))
                 for metric in STAGE_METRICS[stage]
             )
+
+            # If this turn completes the stage, do not show Gemini's generated follow-up question.
+            # Instead, show only the choice panel: move to next stage or keep developing.
             if stage_is_complete and not st.session_state.stage_ready_dismissed.get(stage, False):
                 st.session_state.stage_ready_notice = True
                 st.session_state.stage_ready_language = detect_language_from_text(student_prompt)
+                st.rerun()
 
             st.markdown(display_text)
             st.session_state.messages.append({"role": "assistant", "content": display_text})
