@@ -228,6 +228,12 @@ if "stage_index_memory" not in st.session_state:
 if "stage_ready_notice" not in st.session_state:
     st.session_state.stage_ready_notice = False
 
+if "show_api_key_update" not in st.session_state:
+    st.session_state.show_api_key_update = False
+
+if "api_key_error_notice" not in st.session_state:
+    st.session_state.api_key_error_notice = ""
+
 if "stage_ready_language" not in st.session_state:
     st.session_state.stage_ready_language = "en"
 
@@ -476,6 +482,50 @@ def apply_ai_state_update(stage: str, ai_data: dict):
         if is_meaningful_value(summary_patch):
             st.session_state.rolling_story_summary = summary_patch.strip()
 
+
+def mask_api_key(api_key: str) -> str:
+    """Show a safe partial API key preview without exposing the full key."""
+    if not api_key:
+        return "No API key connected."
+    if len(api_key) <= 10:
+        return "********"
+    return api_key[:6] + "********" + api_key[-4:]
+
+
+def render_api_key_update_panel(panel_key: str = "sidebar"):
+    """Allow the user to update the Gemini API key without clearing project progress."""
+    st.caption(f"Current key: `{mask_api_key(st.session_state.authenticated_key)}`")
+    new_key = st.text_input(
+        "Paste a new Gemini API Key:",
+        type="password",
+        placeholder="AIzaSy...",
+        key=f"new_api_key_{panel_key}"
+    )
+
+    col_update, col_cancel = st.columns(2)
+    with col_update:
+        if st.button("✅ Update Key", use_container_width=True, key=f"update_key_btn_{panel_key}"):
+            if new_key and new_key.strip():
+                st.session_state.authenticated_key = new_key.strip()
+                st.session_state.show_api_key_update = False
+                st.session_state.api_key_error_notice = ""
+                st.success("API Key updated. Your chat, stage, summary, image, and checkpoints are preserved.")
+                st.rerun()
+            else:
+                st.warning("Please paste a valid Gemini API Key first.")
+
+    with col_cancel:
+        if st.button("Cancel", use_container_width=True, key=f"cancel_key_btn_{panel_key}"):
+            st.session_state.show_api_key_update = False
+            st.rerun()
+
+
+def is_quota_error(error_text: str) -> bool:
+    """Detect Gemini quota / rate-limit errors for a student-friendly message."""
+    lowered = error_text.lower()
+    return "429" in lowered or "quota" in lowered or "rate limit" in lowered or "rate_limit" in lowered
+
+
 # =========================================================
 # 5. Full-Screen Authentication Gate
 # =========================================================
@@ -592,10 +642,15 @@ with st.sidebar:
         st.session_state.spec_summaries = fresh_spec_summaries()
         st.rerun()
 
-    if st.button("🚪 Disconnect API Key", use_container_width=True):
-        st.session_state.authenticated_key = None
-        st.session_state.stage_ready_notice = False
+    if st.button("🔑 Update API Key", use_container_width=True):
+        st.session_state.show_api_key_update = not st.session_state.show_api_key_update
         st.rerun()
+
+    if st.session_state.show_api_key_update:
+        st.markdown("---")
+        st.subheader("🔑 Update Gemini API Key")
+        st.caption("Use this when your current key reaches quota. Your current chat and design progress will not be cleared.")
+        render_api_key_update_panel("sidebar")
 
 # =========================================================
 # 8. Main Area Content Rendering
@@ -799,8 +854,14 @@ if len(st.session_state.messages) > 0 and st.session_state.messages[-1]["role"] 
             st.rerun()
 
         except Exception as e:
-            st.error(f"Engine Exception Error: {str(e)}")
-            if "raw_text" in locals() and raw_text:
-                with st.expander("DEBUG GEMINI RAW OUTPUT"):
-                    st.code(raw_text)
-            st.caption("If this happens repeatedly, check whether the Gemini model name is available for your API key and whether the API key has quota.")
+            error_text = str(e)
+            if is_quota_error(error_text):
+                st.error("⚠️ Your current Gemini API Key has reached its usage limit. Please update your API Key to continue.")
+                with st.expander("🔑 Update API Key here", expanded=True):
+                    render_api_key_update_panel("quota_error")
+            else:
+                st.error(f"Engine Exception Error: {error_text}")
+                if "raw_text" in locals() and raw_text:
+                    with st.expander("DEBUG GEMINI RAW OUTPUT"):
+                        st.code(raw_text)
+                st.caption("If this happens repeatedly, check whether the Gemini model name is available for your API key and whether the API key has quota.")
